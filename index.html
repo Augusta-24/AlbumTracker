@@ -1522,8 +1522,8 @@ function sortData(data, col, asc) {
   });
 }
 
-var HIST_IC_PAST = '<svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5" style="width:10px;height:10px;display:inline-block;vertical-align:-1px;margin-right:2px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
-var HIST_IC_REVISIT = '<svg viewBox="0 0 24 24" fill="none" stroke="#5B9BF8" stroke-width="2.5" style="width:10px;height:10px;display:inline-block;vertical-align:-1px;margin-right:2px"><path d="M3 17l4-8 4 6 3-4 4 6"/><path d="M3 20h18"/></svg>';
+var HIST_IC_PAST = '<svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5" style="width:10px;height:10px;display:inline-block;vertical-align:-1px;margin-right:2px"><path d="M3 17l4-8 4 6 3-4 4 6"/><path d="M3 20h18"/></svg>';
+var HIST_IC_REVISIT = '<svg viewBox="0 0 24 24" fill="none" stroke="#5B9BF8" stroke-width="2.5" style="width:10px;height:10px;display:inline-block;vertical-align:-1px;margin-right:2px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
 
 function renderHistory() {
   var tbody = document.getElementById('albumTbody');
@@ -1735,24 +1735,93 @@ var ICON_PAST = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 var ICON_REVISIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:10px;height:10px"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="3"/></svg>';
 var ICON_DISCOVER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:10px;height:10px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
 
+function getSpotifyId(url){
+  if(!url) return '';
+  var m = url.match(/album\/([A-Za-z0-9]+)/);
+  return m ? m[1] : '';
+}
+
+function findRating(id, ar, al) {
+  var ratings = window.REVISIT_RATINGS || [];
+  for (var i = 0; i < ratings.length; i++) {
+    var r = ratings[i];
+    if ((id && r.id === id) || (r.ar === ar && r.al === al)) return r;
+  }
+  return null;
+}
+
+function rateAlbum(albumData, journeyScore, source, onDone) {
+  var scoreStr = prompt('Score for ' + albumData.al + ' (1-100):');
+  if (scoreStr === null) return;
+  var score = parseInt(scoreStr);
+  if (isNaN(score) || score < 1 || score > 100) { alert('Enter a number 1-100.'); return; }
+  requirePin(function(pin) {
+    apiPost({
+      action: 'rate',
+      albumId: albumData.id || '',
+      artist: albumData.ar,
+      album: albumData.al,
+      journeyScore: journeyScore || '',
+      score: score,
+      pin: pin,
+      source: source || ''
+    }, function(res) {
+      if (res.ok) {
+        var existing = findRating(albumData.id, albumData.ar, albumData.al);
+        if (existing) { existing.rs = score; }
+        else { (window.REVISIT_RATINGS=window.REVISIT_RATINGS||[]).push({id:albumData.id||'',ar:albumData.ar,al:albumData.al,js:journeyScore,rs:score}); }
+        if (source === 'discover') {
+          window.DISCOVER_QUEUE = (window.DISCOVER_QUEUE||[]).filter(function(d){ return !(d.ar===albumData.ar && d.al===albumData.al); });
+        }
+        if (onDone) onDone();
+      } else { alert(res.error || 'Failed to save rating'); }
+    });
+  });
+}
+
+function makeRateFooter(albumData, journeyScore, source, onDone) {
+  var footer = document.createElement('div');
+  footer.style.cssText = 'padding:2px 8px 8px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;';
+  var rated = findRating(albumData.id, albumData.ar, albumData.al);
+  if (rated) {
+    var jLabel = journeyScore ? '<span style="font-size:10px;color:var(--muted);">Journey</span><span style="font-size:12px;font-weight:700;color:' + scoreColor(journeyScore) + ';">' + journeyScore + '</span><span style="font-size:10px;color:var(--dim);">&#8594;</span>' : '';
+    footer.innerHTML = jLabel +
+      '<span style="font-size:10px;color:var(--muted);">Score</span>' +
+      '<span style="font-size:12px;font-weight:700;color:' + scoreColor(rated.rs) + ';">' + rated.rs + '</span>' +
+      '<button style="margin-left:auto;background:rgba(61,90,120,0.4);border:none;border-radius:6px;padding:3px 8px;color:var(--muted);font-size:10px;cursor:pointer;">Edit</button>';
+    footer.querySelector('button').addEventListener('click', function(e){
+      e.stopPropagation();
+      rateAlbum(albumData, journeyScore, source, onDone);
+    });
+  } else {
+    var btn = document.createElement('button');
+    btn.textContent = 'Rate';
+    btn.style.cssText = 'background:#2D6BE4;border:none;border-radius:6px;padding:4px 12px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;';
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      rateAlbum(albumData, journeyScore, source, onDone);
+    });
+    footer.appendChild(btn);
+  }
+  return footer;
+}
+
 function renderGrowingUp(filter) {
   var list = document.getElementById('huList');
   if(!list) return;
   list.innerHTML = '';
   var items = filter
-    ? window.HEARD_BEFORE.filter(function(a){
+    ? (window.HEARD_BEFORE||[]).filter(function(a){
         var q = filter.toLowerCase();
         return (a.al||'').toLowerCase().indexOf(q)!==-1 || (a.ar||'').toLowerCase().indexOf(q)!==-1;
       })
-    : window.HEARD_BEFORE;
+    : (window.HEARD_BEFORE||[]);
   if(!items.length){list.innerHTML='<div class="q-empty">No albums found.</div>';return;}
-  items.forEach(function(a){list.appendChild(makeQCard(a, {icon:ICON_PAST,section:'growup'}));});
-}
-
-function getSpotifyId(url){
-  if(!url) return '';
-  var m = url.match(/album\/([A-Za-z0-9]+)/);
-  return m ? m[1] : '';
+  items.forEach(function(a){
+    var card = makeQCard(a, {icon:ICON_PAST, section:'growup'});
+    card.appendChild(makeRateFooter({ar:a.ar, al:a.al, id:a.id||''}, null, 'past', function(){ renderGrowingUp(filter||''); }));
+    list.appendChild(card);
+  });
 }
 
 function renderRevisit() {
@@ -1762,7 +1831,10 @@ function renderRevisit() {
   var items = (window.ALBUMS||[]).filter(function(a){return a.sc>=85;}).sort(function(a,b){return b.sc-a.sc;});
   if(!items.length){list.innerHTML='<div class="q-empty">No albums yet.</div>';return;}
   items.forEach(function(a){
-    list.appendChild(makeQCard({ar:a.ar,al:a.al,id:getSpotifyId(a.au),im:a.im,yr:a.yr},{score:a.sc,icon:ICON_REVISIT,section:'revisit'}));
+    var albumId = getSpotifyId(a.au);
+    var card = makeQCard({ar:a.ar,al:a.al,id:albumId,im:a.im,yr:a.yr},{icon:ICON_REVISIT,section:'revisit'});
+    card.appendChild(makeRateFooter({ar:a.ar,al:a.al,id:albumId}, a.sc, 'revisit', renderRevisit));
+    list.appendChild(card);
   });
 }
 
@@ -1773,14 +1845,27 @@ function renderDiscover() {
   var disc = window.DISCOVER_QUEUE || [];
   if(!disc.length){list.innerHTML='<div class="q-empty">Add albums to explore.</div>';return;}
   disc.forEach(function(a,i){
-    list.appendChild(makeQCard(a, {icon:ICON_DISCOVER,section:'discover',removable:function(el){
+    var card = makeQCard(a, {icon:ICON_DISCOVER, section:'discover'});
+    var footer = document.createElement('div');
+    footer.style.cssText = 'padding:2px 8px 8px;display:flex;align-items:center;gap:6px;';
+    var rateFooter = makeRateFooter({ar:a.ar,al:a.al,id:a.id||''}, null, 'discover', renderDiscover);
+    rateFooter.style.flex = '1';
+    var rmBtn = document.createElement('button');
+    rmBtn.textContent = '×';
+    rmBtn.style.cssText = 'background:none;border:none;color:var(--dim);font-size:18px;line-height:1;cursor:pointer;padding:0 2px;flex-shrink:0;';
+    rmBtn.addEventListener('click', function(e){
+      e.stopPropagation();
       requirePin(function(pin){
         apiPost({action:'removeDiscover',artist:a.ar,album:a.al,pin:pin},function(res){
           if(res.ok){ window.DISCOVER_QUEUE.splice(i,1); renderDiscover(); }
-          else { alert(res.error || 'Failed to remove'); }
+          else { alert(res.error||'Failed to remove'); }
         });
       });
-    }}));
+    });
+    footer.appendChild(rateFooter);
+    footer.appendChild(rmBtn);
+    card.appendChild(footer);
+    list.appendChild(card);
   });
 }
 
