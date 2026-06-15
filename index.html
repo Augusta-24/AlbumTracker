@@ -957,6 +957,9 @@ body{
         <div id="suggestResults" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface2);border:1px solid var(--border-mid);border-radius:10px;z-index:50;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></div>
       </div>
       <div id="suggestSelected" style="display:none;align-items:center;gap:10px;margin-top:8px;background:rgba(91,155,248,0.06);border:1px solid var(--border-mid);border-radius:8px;padding:8px 10px;"></div>
+      <div id="suggestEmbedWrap" style="display:none;margin-top:8px;border-radius:12px;overflow:hidden;">
+        <iframe id="suggestEmbedFrame" allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write" frameborder="0" height="175" style="width:100%;border-radius:12px;display:block;" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation" src=""></iframe>
+      </div>
       <input type="url" id="suggestSpotifyUrl" placeholder="Spotify URL (optional)" autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:16px;outline:none;">
       <button id="suggestSubmitBtn" disabled style="width:100%;margin-top:8px;background:#2D6BE4;border:none;border-radius:8px;padding:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;opacity:0.4;">Suggest Album</button>
     </div>
@@ -2143,6 +2146,19 @@ if (randomizerBtn) {
   var timer = null;
   var picked = null;
 
+  function showSuggestEmbed(amUrl) {
+    var wrap = document.getElementById('suggestEmbedWrap');
+    var frame = document.getElementById('suggestEmbedFrame');
+    if (!wrap || !frame) return;
+    if (amUrl) {
+      frame.src = amUrl.replace('https://music.apple.com/', 'https://embed.music.apple.com/');
+      wrap.style.display = 'block';
+    } else {
+      frame.src = '';
+      wrap.style.display = 'none';
+    }
+  }
+
   function setSubmitEnabled(on) {
     submitEl.disabled = !on;
     submitEl.style.opacity = on ? '1' : '0.4';
@@ -2189,9 +2205,10 @@ if (randomizerBtn) {
                 '</div>' +
                 '<button id="suggestClear" style="background:none;border:none;color:var(--dim);font-size:20px;line-height:1;cursor:pointer;flex-shrink:0;padding:0 4px;">&times;</button>';
               document.getElementById('suggestClear').addEventListener('click', function(){
-                picked = null; selectedEl.style.display = 'none'; setSubmitEnabled(false);
+                picked = null; selectedEl.style.display = 'none'; setSubmitEnabled(false); showSuggestEmbed(null);
               });
               setSubmitEnabled(true);
+              showSuggestEmbed(amUrl);
             });
             resultsEl.appendChild(item);
           });
@@ -2233,9 +2250,10 @@ if (randomizerBtn) {
             '</div>' +
             '<button id="suggestClear" style="background:none;border:none;color:var(--dim);font-size:20px;line-height:1;cursor:pointer;flex-shrink:0;padding:0 4px;">&times;</button>';
           document.getElementById('suggestClear').addEventListener('click', function(){
-            picked = null; selectedEl.style.display = 'none'; setSubmitEnabled(false);
+            picked = null; selectedEl.style.display = 'none'; setSubmitEnabled(false); showSuggestEmbed(null);
           });
           setSubmitEnabled(true);
+          showSuggestEmbed(picked.amUrl);
         })
         .catch(function() {
           randomBtn.innerHTML = '&#127922; Random from Apple Music';
@@ -2394,7 +2412,7 @@ function renderGrid() {
   if (!wrap) return;
   // Always rebuild so newly rated queue albums appear immediately
   var all = buildHistoryData().filter(function(a){
-    return (a.sc != null || a.rs != null) && a.im;
+    return a.sc != null || a.rs != null;
   }).sort(function(a,b){
     var sa = a.rs != null ? a.rs : a.sc;
     var sb = b.rs != null ? b.rs : b.sc;
@@ -2405,11 +2423,15 @@ function renderGrid() {
     var sc = a.rs != null ? a.rs : a.sc;
     var card = document.createElement('div');
     card.className = 'grid-card';
-    var img = document.createElement('img');
-    img.src = a.im;
-    img.loading = 'lazy';
-    img.alt = '';
-    card.appendChild(img);
+    if (a.im) {
+      var img = document.createElement('img');
+      img.src = a.im;
+      img.loading = 'lazy';
+      img.alt = '';
+      card.appendChild(img);
+    } else {
+      card.style.cssText += 'background:linear-gradient(135deg,'+scoreColor(sc)+'55,'+scoreColor(sc)+'22);';
+    }
     var badge = document.createElement('span');
     badge.className = 'grid-score';
     badge.textContent = sc;
