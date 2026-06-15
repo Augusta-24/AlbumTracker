@@ -297,7 +297,7 @@ body{
 #albumCount{
   font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;
 }
-.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);}
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);background:rgba(11,21,32,0.72);}
 #albumTable{
   width:100%;border-collapse:collapse;font-size:12px;
 }
@@ -366,16 +366,20 @@ body{
 }
 
 /* QUEUE PAGE */
+/* blink animation for ON AIR light */
+@keyframes onAirBlink{0%,100%{opacity:1;box-shadow:0 0 8px #e07070,0 0 18px rgba(224,112,112,0.5);}50%{opacity:0.3;box-shadow:none;}}
 #qPlayer{
   background:
-    radial-gradient(circle,rgba(91,155,248,0.10) 1px,transparent 1px),
-    linear-gradient(160deg,#091624 0%,#0d2040 55%,#090f1c 100%);
-  background-size:10px 10px,100% 100%;
+    repeating-radial-gradient(circle at 50% 50%,transparent 0px,transparent 13px,rgba(91,155,248,0.07) 13px,rgba(91,155,248,0.07) 14px),
+    radial-gradient(ellipse at 50% 50%,rgba(91,155,248,0.08) 0%,transparent 70%),
+    linear-gradient(160deg,#060f1a 0%,#091a2e 55%,#060c15 100%);
   border:1px solid rgba(91,155,248,0.28);
   border-top:2px solid rgba(91,155,248,0.5);
   border-radius:16px;padding:16px;margin-bottom:0;
-  box-shadow:0 4px 28px rgba(0,0,0,0.45),inset 0 1px 0 rgba(91,155,248,0.1);
+  box-shadow:0 4px 28px rgba(0,0,0,0.5),inset 0 1px 0 rgba(91,155,248,0.1);
 }
+#qOnAirLight{width:8px;height:8px;border-radius:50%;background:#e07070;opacity:0.25;flex-shrink:0;transition:opacity 0.3s;}
+#qOnAirLight.live{opacity:1;animation:onAirBlink 1.4s ease-in-out infinite;}
 #qPlayerTop{display:flex;gap:14px;align-items:center;}
 .q-vinyl{
   width:90px;height:90px;border-radius:50%;
@@ -476,6 +480,7 @@ body{
   font-family:system-ui,-apple-system,sans-serif;
 }
 .q-add-form input:focus{border-color:var(--sky);}
+#suggestSearch:focus,#suggestSpotifyUrl:focus{border-color:var(--sky);outline:none;}
 .q-add-form input::placeholder{color:var(--dim);}
 .q-add-form button{
   background:var(--blue);color:#fff;border:none;
@@ -871,6 +876,10 @@ body{
   </div>
   <!-- ── VINYL PLAYER (hidden until album selected) ── -->
   <div id="qPlayer">
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">
+      <div id="qOnAirLight"></div>
+      <span style="font-size:10px;font-weight:700;color:rgba(91,155,248,0.45);letter-spacing:0.12em;text-transform:uppercase;">On Air</span>
+    </div>
     <div id="qPlayerTop">
       <div class="q-vinyl" id="qVinylDisc">
         <div class="q-vinyl-label" id="qVinylLabel"></div>
@@ -893,11 +902,11 @@ body{
   </div>
 
   <!-- ── RANDOMIZER ── -->
-  <div id="randomizerBox" style="background:radial-gradient(circle,rgba(167,139,250,0.09) 1px,transparent 1px),linear-gradient(160deg,#0d0f20 0%,#16123a 55%,#090b1a 100%);background-size:10px 10px,100% 100%;border:1px solid rgba(167,139,250,0.28);border-top:2px solid rgba(167,139,250,0.5);border-radius:16px;padding:14px 16px;margin-top:10px;margin-bottom:16px;box-shadow:0 4px 28px rgba(0,0,0,0.45),inset 0 1px 0 rgba(167,139,250,0.08);">
-    <div style="font-size:10px;font-weight:600;color:rgba(167,139,250,0.6);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">On Air</div>
-    <button id="randomizerBtn" style="width:100%;background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.3);border-radius:10px;padding:11px 16px;color:#c4b5fd;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:0.02em;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
-      Surprise Me
+  <div id="randomizerBox" style="background:repeating-radial-gradient(circle at 50% 50%,transparent 0px,transparent 17px,rgba(245,158,11,0.05) 17px,rgba(245,158,11,0.05) 18px),radial-gradient(ellipse at 50% 50%,rgba(245,158,11,0.06) 0%,transparent 65%),linear-gradient(160deg,#100c02 0%,#1a1202 60%,#0d0a02 100%);border:1px solid rgba(245,158,11,0.28);border-top:2px solid rgba(245,158,11,0.55);border-radius:16px;padding:14px 16px;margin-top:10px;margin-bottom:16px;box-shadow:0 4px 28px rgba(0,0,0,0.5),inset 0 1px 0 rgba(245,158,11,0.08);">
+    <div style="font-size:10px;font-weight:700;color:rgba(245,158,11,0.5);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Select Station</div>
+    <button id="randomizerBtn" style="width:100%;background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:11px 16px;color:#fbbf24;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:0.02em;">
+      <svg viewBox="0 0 28 28" fill="none" style="width:22px;height:22px;flex-shrink:0;"><circle cx="14" cy="14" r="11" stroke="#fbbf24" stroke-width="1.5" opacity="0.5"/><circle cx="14" cy="14" r="7" stroke="#fbbf24" stroke-width="1.5" opacity="0.7"/><circle cx="14" cy="14" r="3" fill="#fbbf24" opacity="0.9"/><line x1="14" y1="3" x2="14" y2="9" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><circle cx="14" cy="14" r="1.5" fill="#100c02"/></svg>
+      Tune In
     </button>
   </div>
 
@@ -930,6 +939,17 @@ body{
       <button id="dAddBtn">+ Add to Discover</button>
     </div>
     <div id="dList" class="q-album-list"></div>
+    <!-- ── PUBLIC SUGGESTION FORM ── -->
+    <div style="border-top:1px solid var(--border);margin-top:20px;padding-top:16px;">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Suggest an Album</div>
+      <div style="position:relative;">
+        <input type="text" id="suggestSearch" placeholder="Search artist or album..." autocomplete="off" autocorrect="off" spellcheck="false" style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border-mid);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
+        <div id="suggestResults" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface2);border:1px solid var(--border-mid);border-radius:10px;z-index:50;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></div>
+      </div>
+      <div id="suggestSelected" style="display:none;align-items:center;gap:10px;margin-top:8px;background:rgba(91,155,248,0.06);border:1px solid var(--border-mid);border-radius:8px;padding:8px 10px;"></div>
+      <input type="url" id="suggestSpotifyUrl" placeholder="Spotify URL (optional)" autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none;">
+      <button id="suggestSubmitBtn" disabled style="width:100%;margin-top:8px;background:#2D6BE4;border:none;border-radius:8px;padding:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;opacity:0.4;">Suggest Album</button>
+    </div>
   </div>
 
 </div>
@@ -1128,124 +1148,68 @@ function initTimeline() {
   var ctx = canvas.getContext('2d');
   ctx.scale(DPR, DPR);
 
-  var pts = window.TIMELINE;
+  var pts = window.TIMELINE; // [[day, score], ...]
   var maxDay = 335;
   var pad = { l: 34, r: 12, t: 14, b: 22 };
   var cW = W - pad.l - pad.r;
   var cH = H - pad.t - pad.b;
+  var bottomY = H - pad.b;
 
-  function ptX(day) { return pad.l + ((day - 1) / (maxDay - 1)) * cW; }
-  function ptY(sc)  { return pad.t + (1 - sc / 100) * cH; }
+  function ptX(i)  { return pad.l + (i / (pts.length - 1)) * cW; }
+  function ptY(sc) { return pad.t + (1 - sc / 100) * cH; }
 
-  var mapped = pts.map(function(p) { return [ptX(p[0]), ptY(p[1]), p[0], p[1]]; });
+  // Build bar data + album refs
+  var bars = pts.map(function(p, i) {
+    var x = ptX(i);
+    var y = ptY(p[1]);
+    var albumRef = null;
+    for (var j = 0; j < (window.ALBUMS||[]).length; j++) {
+      if (window.ALBUMS[j].d == p[0]) { albumRef = window.ALBUMS[j]; break; }
+    }
+    return { x: x, y: y, day: p[0], sc: p[1], album: albumRef };
+  });
 
-  // Gridlines + y-axis score labels
+  var barW = Math.max(1.2, cW / pts.length);
+
+  // Gridlines + y-axis labels
   ctx.font = '9px system-ui,-apple-system,sans-serif';
   [25, 50, 75, 100].forEach(function(v) {
     var y = ptY(v);
-    ctx.beginPath();
-    ctx.moveTo(pad.l, y);
-    ctx.lineTo(W - pad.r, y);
-    ctx.strokeStyle = 'rgba(91,155,248,0.09)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(122,156,192,0.65)';
-    ctx.textAlign = 'right';
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y);
+    ctx.strokeStyle = 'rgba(91,155,248,0.09)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = 'rgba(122,156,192,0.65)'; ctx.textAlign = 'right';
     ctx.fillText(v, pad.l - 5, y + 3);
   });
 
-  // x-axis day labels
+  // x-axis labels
   ctx.fillStyle = 'rgba(122,156,192,0.55)';
-  ctx.textAlign = 'left';
-  ctx.fillText('Day 1', pad.l, H - 5);
-  ctx.textAlign = 'right';
-  ctx.fillText('Day 335', W - pad.r, H - 5);
+  ctx.textAlign = 'left';  ctx.fillText('Day 1',   pad.l,       H - 5);
+  ctx.textAlign = 'right'; ctx.fillText('Day 335', W - pad.r,   H - 5);
 
   // Avg dashed line at 72
   var avgY = ptY(72);
-  ctx.save();
-  ctx.setLineDash([4, 4]);
-  ctx.beginPath();
-  ctx.moveTo(pad.l, avgY);
-  ctx.lineTo(W - pad.r, avgY);
-  ctx.strokeStyle = 'rgba(167,139,250,0.38)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
+  ctx.save(); ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(pad.l, avgY); ctx.lineTo(W - pad.r, avgY);
+  ctx.strokeStyle = 'rgba(167,139,250,0.38)'; ctx.lineWidth = 1; ctx.stroke();
   ctx.restore();
   ctx.fillStyle = 'rgba(167,139,250,0.7)';
-  ctx.font = '9px system-ui,-apple-system,sans-serif';
   ctx.textAlign = 'right';
   ctx.fillText('avg 72', W - pad.r - 2, avgY - 3);
 
-  // Fill gradient under curve
-  var fillGrad = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
-  fillGrad.addColorStop(0, 'rgba(91,155,248,0.15)');
-  fillGrad.addColorStop(1, 'rgba(91,155,248,0)');
-  ctx.beginPath();
-  ctx.moveTo(mapped[0][0], mapped[0][1]);
-  for (var i = 1; i < mapped.length - 1; i++) {
-    var mx = (mapped[i][0] + mapped[i+1][0]) / 2;
-    var my = (mapped[i][1] + mapped[i+1][1]) / 2;
-    ctx.quadraticCurveTo(mapped[i][0], mapped[i][1], mx, my);
-  }
-  ctx.lineTo(mapped[mapped.length-1][0], mapped[mapped.length-1][1]);
-  ctx.lineTo(mapped[mapped.length-1][0], H - pad.b);
-  ctx.lineTo(mapped[0][0], H - pad.b);
-  ctx.closePath();
-  ctx.fillStyle = fillGrad;
-  ctx.fill();
-
-  // Stroke gradient line
-  var lineGrad = ctx.createLinearGradient(pad.l, 0, W - pad.r, 0);
-  lineGrad.addColorStop(0, '#a78bfa');
-  lineGrad.addColorStop(0.5, '#5B9BF8');
-  lineGrad.addColorStop(1, '#F5C842');
-  ctx.beginPath();
-  ctx.moveTo(mapped[0][0], mapped[0][1]);
-  for (var i = 1; i < mapped.length - 1; i++) {
-    var mx = (mapped[i][0] + mapped[i+1][0]) / 2;
-    var my = (mapped[i][1] + mapped[i+1][1]) / 2;
-    ctx.quadraticCurveTo(mapped[i][0], mapped[i][1], mx, my);
-  }
-  ctx.lineTo(mapped[mapped.length-1][0], mapped[mapped.length-1][1]);
-  ctx.strokeStyle = lineGrad;
-  ctx.lineWidth = 2;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  ctx.stroke();
-
-  // Gold pulsing dot at day 271 (Blackbird 100/100)
-  var goldX = ptX(271);
-  var goldY = ptY(100);
-  var pulse = 0;
-  function animGold() {
-    ctx.clearRect(goldX - 32, goldY - 32, 64, 64);
-    var r = 8 + Math.sin(pulse) * 4;
-    ctx.beginPath();
-    ctx.arc(goldX, goldY, r, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(245,200,66,' + (0.3 + 0.3 * Math.sin(pulse)) + ')';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(goldX, goldY, 5, 0, Math.PI * 2);
-    ctx.fillStyle = '#F5C842';
-    ctx.fill();
-    // "Blackbird 100" label
-    ctx.font = 'bold 9px system-ui,-apple-system,sans-serif';
-    ctx.fillStyle = 'rgba(245,200,66,0.9)';
-    ctx.textAlign = goldX > W * 0.65 ? 'right' : 'left';
-    ctx.fillText('Blackbird 100', goldX > W * 0.65 ? goldX - 12 : goldX + 12, goldY - 12);
-    pulse += 0.07;
-    requestAnimationFrame(animGold);
-  }
-  animGold();
+  // Bars (score-colored, drawn bottom-up)
+  bars.forEach(function(b) {
+    ctx.globalAlpha = 0.78;
+    ctx.fillStyle = scoreColor(b.sc);
+    ctx.fillRect(b.x - barW * 0.45, b.y, Math.max(1, barW * 0.9), bottomY - b.y);
+  });
+  ctx.globalAlpha = 1;
 
   // Tap/click — show persistent card below chart
   var tapCard = document.getElementById('tlTapCard');
   function findNearest(cx) {
     var best = 0, bestDist = Infinity;
-    for (var i = 0; i < mapped.length; i++) {
-      var d = Math.abs(mapped[i][0] - cx);
+    for (var i = 0; i < bars.length; i++) {
+      var d = Math.abs(bars[i].x - cx);
       if (d < bestDist) { bestDist = d; best = i; }
     }
     return best;
@@ -1253,18 +1217,18 @@ function initTimeline() {
   function showTap(e) {
     var rect = canvas.getBoundingClientRect();
     var clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    var idx = findNearest(clientX - rect.left);
-    var album = window.ALBUMS[idx];
+    var b = bars[findNearest(clientX - rect.left)];
+    var album = b.album;
     if (!album || !tapCard) return;
-    var bg = scoreColor(album.sc);
+    var bg = scoreColor(b.sc);
     tapCard.style.display = 'flex';
     tapCard.innerHTML =
       (album.im ? '<img src="' + album.im + '" style="width:44px;height:44px;border-radius:6px;object-fit:cover;flex-shrink:0;">' : '') +
       '<div style="flex:1;min-width:0;">' +
         '<div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (album.al||'') + '</div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-top:2px;">' + (album.ar||'') + ' &middot; Day ' + album.d + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:2px;">' + (album.ar||'') + ' &middot; Day ' + b.day + '</div>' +
       '</div>' +
-      '<span style="background:' + bg + ';color:#000;font-size:13px;font-weight:800;border-radius:8px;padding:3px 9px;flex-shrink:0;">' + album.sc + '</span>';
+      '<span style="background:' + bg + ';color:#000;font-size:13px;font-weight:800;border-radius:8px;padding:3px 9px;flex-shrink:0;">' + b.sc + '</span>';
   }
   canvas.addEventListener('click', showTap);
   canvas.addEventListener('touchstart', function(e){ e.preventDefault(); showTap(e); }, {passive:false});
@@ -1744,6 +1708,9 @@ function selectQAlbum(a, cardEl, source, journeyScore) {
   if(activeQCard) activeQCard.classList.remove('selected');
   activeQCard = cardEl || null;
   if(activeQCard) activeQCard.classList.add('selected');
+  // On Air light
+  var light = document.getElementById('qOnAirLight');
+  if (light) light.classList.add('live');
   // Rate area
   var rateArea = document.getElementById('qPlayerRateArea');
   if (rateArea) {
@@ -2011,6 +1978,107 @@ if (randomizerBtn) {
     showPage('upnext');
   });
 }
+
+
+// ---- PUBLIC SUGGESTION FORM (iTunes search) ----
+(function() {
+  var searchEl  = document.getElementById('suggestSearch');
+  var resultsEl = document.getElementById('suggestResults');
+  var selectedEl= document.getElementById('suggestSelected');
+  var spotifyEl = document.getElementById('suggestSpotifyUrl');
+  var submitEl  = document.getElementById('suggestSubmitBtn');
+  if (!searchEl) return;
+
+  var timer = null;
+  var picked = null;
+
+  function setSubmitEnabled(on) {
+    submitEl.disabled = !on;
+    submitEl.style.opacity = on ? '1' : '0.4';
+    submitEl.style.cursor  = on ? 'pointer' : 'default';
+  }
+
+  searchEl.addEventListener('input', function() {
+    var q = this.value.trim();
+    clearTimeout(timer);
+    if (q.length < 2) { resultsEl.style.display = 'none'; return; }
+    timer = setTimeout(function() {
+      fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(q) + '&entity=album&limit=7')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          resultsEl.innerHTML = '';
+          if (!data.results || !data.results.length) {
+            resultsEl.innerHTML = '<div style="padding:10px 12px;font-size:11px;color:var(--muted);">No results found</div>';
+            resultsEl.style.display = 'block'; return;
+          }
+          data.results.forEach(function(r) {
+            var art = (r.artworkUrl100||'').replace('100x100bb','300x300bb');
+            var year = (r.releaseDate||'').substring(0,4);
+            var item = document.createElement('div');
+            item.style.cssText = 'display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);';
+            item.innerHTML =
+              '<img src="' + (r.artworkUrl100||'') + '" style="width:38px;height:38px;border-radius:5px;object-fit:cover;flex-shrink:0;">' +
+              '<div style="min-width:0;">' +
+                '<div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (r.collectionName||'') + '</div>' +
+                '<div style="font-size:10px;color:var(--muted);">' + (r.artistName||'') + (year ? ' · ' + year : '') + '</div>' +
+              '</div>';
+            item.addEventListener('mouseover', function(){ this.style.background='rgba(91,155,248,0.07)'; });
+            item.addEventListener('mouseout',  function(){ this.style.background=''; });
+            item.addEventListener('click', function() {
+              picked = { artist:r.artistName||'', album:r.collectionName||'', artUrl:art, year:year };
+              resultsEl.style.display = 'none';
+              searchEl.value = '';
+              selectedEl.style.display = 'flex';
+              selectedEl.innerHTML =
+                '<img src="' + art + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">' +
+                '<div style="flex:1;min-width:0;">' +
+                  '<div style="font-size:12px;font-weight:700;color:var(--text);">' + picked.album + '</div>' +
+                  '<div style="font-size:10px;color:var(--muted);">' + picked.artist + (picked.year ? ' · ' + picked.year : '') + '</div>' +
+                '</div>' +
+                '<button id="suggestClear" style="background:none;border:none;color:var(--dim);font-size:20px;line-height:1;cursor:pointer;flex-shrink:0;padding:0 4px;">&times;</button>';
+              document.getElementById('suggestClear').addEventListener('click', function(){
+                picked = null; selectedEl.style.display = 'none'; setSubmitEnabled(false);
+              });
+              setSubmitEnabled(true);
+            });
+            resultsEl.appendChild(item);
+          });
+          resultsEl.style.display = 'block';
+        })
+        .catch(function(){ resultsEl.innerHTML = '<div style="padding:10px 12px;font-size:11px;color:var(--red);">Search unavailable</div>'; resultsEl.style.display='block'; });
+    }, 320);
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!searchEl.contains(e.target) && !resultsEl.contains(e.target)) resultsEl.style.display = 'none';
+  });
+
+  submitEl.addEventListener('click', function() {
+    if (!picked) return;
+    var btn = this;
+    btn.disabled = true; btn.style.opacity = '0.5'; btn.textContent = 'Sending...';
+    apiPost({
+      action: 'suggest',
+      artist:     picked.artist,
+      album:      picked.album,
+      artUrl:     picked.artUrl,
+      year:       picked.year,
+      spotifyUrl: spotifyEl ? spotifyEl.value.trim() : '',
+      notes:      ''
+    }, function(res) {
+      if (res.ok) {
+        selectedEl.style.display = 'none';
+        if (spotifyEl) spotifyEl.value = '';
+        picked = null; setSubmitEnabled(false);
+        btn.style.opacity = '1'; btn.textContent = 'Suggested — thanks!';
+        setTimeout(function(){ btn.textContent = 'Suggest Album'; }, 3000);
+      } else {
+        btn.style.opacity = '1'; btn.disabled = false;
+        btn.textContent = 'Failed — try again';
+      }
+    });
+  });
+})();
 
 // ---- INIT on load ----
 window.addEventListener('load', function() {
