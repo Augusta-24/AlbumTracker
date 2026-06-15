@@ -544,15 +544,6 @@ body{
     <div class="bar-chart" id="barChart"></div>
   </div>
 
-  <!-- TIMELINE -->
-  <div class="section-label">Score Timeline</div>
-  <div class="timeline-wrap">
-    <canvas id="timelineCanvas" style="cursor:crosshair;"></canvas>
-    <div id="tlTapCard" style="display:none;align-items:center;gap:10px;margin-top:10px;background:var(--surface2);border-radius:10px;padding:10px 12px;"></div>
-  </div>
-  <div class="section-label" style="padding:0 16px;margin-top:20px;margin-bottom:0;font-size:11px;letter-spacing:0.06em;">Journey Highlights</div>
-  <div id="topAlbumsStrip" style="display:flex;gap:10px;overflow-x:auto;padding:10px 16px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
-
   <!-- ROAD -->
   <div class="section-label" style="padding:0 16px;margin-top:28px;">The Road Traveled</div>
   <div id="roadSection">
@@ -906,7 +897,7 @@ body{
     <div style="font-size:10px;font-weight:700;color:rgba(245,158,11,0.5);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Select Station</div>
     <button id="randomizerBtn" style="width:100%;background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:11px 16px;color:#fbbf24;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:0.02em;">
       <svg viewBox="0 0 28 28" fill="none" style="width:22px;height:22px;flex-shrink:0;"><circle cx="14" cy="14" r="11" stroke="#fbbf24" stroke-width="1.5" opacity="0.5"/><circle cx="14" cy="14" r="7" stroke="#fbbf24" stroke-width="1.5" opacity="0.7"/><circle cx="14" cy="14" r="3" fill="#fbbf24" opacity="0.9"/><line x1="14" y1="3" x2="14" y2="9" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><circle cx="14" cy="14" r="1.5" fill="#100c02"/></svg>
-      Tune In
+      Surprise Me!
     </button>
   </div>
 
@@ -933,11 +924,6 @@ body{
 
   <!-- ── DISCOVER PANEL ── -->
   <div id="qt-discover" class="q-panel">
-    <div class="q-add-form">
-      <input type="text" id="dArtist" placeholder="Artist name" autocomplete="off">
-      <input type="text" id="dAlbum" placeholder="Album name" autocomplete="off">
-      <button id="dAddBtn">+ Add to Discover</button>
-    </div>
     <div id="dList" class="q-album-list"></div>
     <!-- ── PUBLIC SUGGESTION FORM ── -->
     <div style="border-top:1px solid var(--border);margin-top:20px;padding-top:16px;">
@@ -1935,31 +1921,6 @@ if(huSearch){
   huSearch.addEventListener('input', function(){ renderGrowingUp(this.value); });
 }
 
-// Discover add
-var dAddBtn = document.getElementById('dAddBtn');
-if(dAddBtn){
-  dAddBtn.addEventListener('click', function(){
-    var ar = document.getElementById('dArtist').value.trim();
-    var al = document.getElementById('dAlbum').value.trim();
-    if(!ar && !al) return;
-    requirePin(function(pin) {
-      var entry = {ar:ar,al:al,id:'',im:'',yr:''};
-      apiPost({action:'addDiscover',artist:ar,album:al,id:'',im:'',yr:'',pin:pin}, function(res){
-        if(res.ok){
-          window.DISCOVER_QUEUE.push(entry);
-          document.getElementById('dArtist').value='';
-          document.getElementById('dAlbum').value='';
-          renderDiscover();
-        } else { alert(res.error || 'Failed to add'); }
-      });
-    });
-  });
-}
-['dArtist','dAlbum'].forEach(function(id){
-  var el=document.getElementById(id);
-  if(el) el.addEventListener('keydown',function(e){if(e.key==='Enter') document.getElementById('dAddBtn').click();});
-});
-
 // ---- RANDOMIZER ----
 var randomizerBtn = document.getElementById('randomizerBtn');
 if (randomizerBtn) {
@@ -2084,25 +2045,9 @@ if (randomizerBtn) {
 window.addEventListener('load', function() {
   fetchAllData(function() {
     filteredData = window.ALBUMS.slice();
-    initTimeline();
     drawRoad();
     drawTraveler(0);
     renderQueue();
-    // Journey Highlights strip (top albums by score)
-    var strip = document.getElementById('topAlbumsStrip');
-    if (strip) {
-      var tops = (window.ALBUMS||[]).filter(function(a){return a.sc>=90;}).sort(function(a,b){return b.sc-a.sc;});
-      tops.forEach(function(a) {
-        var el = document.createElement('div');
-        el.style.cssText = 'flex-shrink:0;position:relative;' + (a.au ? 'cursor:pointer;' : '');
-        el.innerHTML =
-          '<img src="' + (a.im||'') + '" style="width:68px;height:68px;border-radius:8px;display:block;object-fit:cover;box-shadow:0 3px 12px rgba(0,0,0,0.5);" loading="lazy">' +
-          '<div style="position:absolute;bottom:22px;right:3px;font-size:9px;font-weight:800;color:#000;background:' + scoreColor(a.sc) + ';border-radius:4px;padding:1px 4px;line-height:1.4;">' + a.sc + '</div>' +
-          '<div style="font-size:9px;color:var(--muted);margin-top:4px;width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (a.al||'') + '</div>';
-        if (a.au) el.addEventListener('click', function(url){ return function(){ window.open(url,'_blank','noopener'); }; }(a.au));
-        strip.appendChild(el);
-      });
-    }
     // Flyby strip Spotify links — match by image URL
     document.querySelectorAll('.flyby-strip').forEach(function(strip) {
       strip.addEventListener('click', function(e) {
