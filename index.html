@@ -498,8 +498,8 @@ body{
 .q-empty{text-align:center;color:var(--dim);font-size:13px;padding:28px 0;}
 /* ---- GRID TAB ---- */
 #page-grid{padding:0 0 80px;}
-.grid-card{aspect-ratio:1;transition:transform 0.15s ease;}
-.grid-card:hover{transform:scale(1.5);z-index:10;}
+.grid-card{aspect-ratio:1;transform:var(--wave,none);transition:transform 0.07s linear;z-index:0;}
+@media(hover:hover){.grid-card:hover{transform:scale(1.85)!important;z-index:10;transition:transform 0.15s ease;}}
 /* Lightbox */
 #gridLightbox{display:none;position:fixed;inset:0;z-index:8500;}
 #gridLbBackdrop{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background 0.35s ease;}
@@ -2411,6 +2411,32 @@ window.addEventListener('load', function() {
 
 // ---- GRID TAB ----
 var _lbOrigin = null;
+var _gridCards = [];
+var _gridWaveRaf = null;
+
+function _runGridWave() {
+  var vc_y = window.scrollY + window.innerHeight / 2;
+  var vc_x = window.innerWidth / 2;
+  var zone  = window.innerHeight * 0.55;
+  _gridCards.forEach(function(card) {
+    var dy   = card._cy - vc_y;
+    var dx   = card._cx - vc_x;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > zone * 1.6) { card.style.removeProperty('--wave'); return; }
+    var t      = Math.max(0, 1 - dist / zone);
+    var scale  = 1 + 0.28 * t * t;
+    var tilt   = (-(dx / vc_x) * 14 * (1 - t * 0.6)).toFixed(1);   // bowl: edge tiles lean inward
+    var lift   = (-t * t * 6).toFixed(1);                            // center floats up
+    card.style.setProperty('--wave', 'scale('+scale.toFixed(3)+') rotate('+tilt+'deg) translateY('+lift+'px)');
+  });
+}
+
+window.addEventListener('scroll', function() {
+  var pg = document.querySelector('.page.active');
+  if (!pg || pg.id !== 'page-grid') return;
+  if (_gridWaveRaf) return;
+  _gridWaveRaf = requestAnimationFrame(function() { _gridWaveRaf = null; _runGridWave(); });
+}, {passive:true});
 var _lbPinchDist = 0;
 var _lbPinchScale = 1;
 var _lbPinchBase = 1;
@@ -2444,6 +2470,7 @@ function renderGrid() {
         seen[key] = true;
         list.push({ar:r.ar, al:r.al, sc:parseInt(r.rs)||0, im:r.im||'', yr:''});
       });
+      list.sort(function(a, b){ return (b.sc||0) - (a.sc||0); });
       var count = 0;
       list.forEach(function(a) {
         count++;
@@ -2460,11 +2487,24 @@ function renderGrid() {
           img.alt = '';
           card.appendChild(img);
         }
+        if (sc) {
+          var badge = document.createElement('span');
+          badge.style.cssText = 'position:absolute;bottom:2px;right:2px;font-size:7px;font-weight:900;line-height:1;padding:1px 3px;border-radius:2px;color:#000;background:'+col+';pointer-events:none;z-index:2;';
+          badge.textContent = sc;
+          card.appendChild(badge);
+        }
         (function(c, ar, al, score, im, yr){
           c.addEventListener('click', function(){ openGridLightbox(c, {ar:ar, al:al, sc:score, im:im, yr:yr}); });
         })(card, a.ar||'', a.al||'', sc, a.im||'', a.yr||'');
         wrap.appendChild(card);
       });
+      // Cache center positions for wave math (no per-frame DOM reads)
+      _gridCards = Array.prototype.slice.call(wrap.querySelectorAll('.grid-card'));
+      _gridCards.forEach(function(c) {
+        c._cx = c.offsetLeft + c.offsetWidth / 2;
+        c._cy = c.offsetTop  + c.offsetHeight / 2;
+      });
+      _runGridWave();
       if (status) {
         if (count > 0) { status.style.display = 'none'; }
         else { status.textContent = 'No albums yet.'; }
