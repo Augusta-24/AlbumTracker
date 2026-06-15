@@ -1973,7 +1973,11 @@ function renderDiscover() {
   if(!list) return;
   list.innerHTML = '';
   var disc = window.DISCOVER_QUEUE || [];
-  if(!disc.length){list.innerHTML='<div class="q-empty">Add albums to explore.</div>';return;}
+  if(!disc.length){
+    list.innerHTML='<div class="q-empty">Add albums to explore.</div>';
+    renderSuggestions();
+    return;
+  }
   disc.forEach(function(a,i){
     var card = makeQCard(a, {icon:ICON_DISCOVER, section:'discover'});
     var footer = document.createElement('div');
