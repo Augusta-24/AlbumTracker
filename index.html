@@ -1113,6 +1113,7 @@ function showPage(name) {
   if (pg) pg.classList.add('active');
   var tb = document.querySelector('.tab-btn[data-page="' + name + '"]');
   if (tb) tb.classList.add('active');
+  window.scrollTo(0, 0);
   if (name === 'history') renderHistory();
   if (name === 'upnext') renderQueue();
 }
@@ -1946,24 +1947,17 @@ function renderRevisit() {
   var list = document.getElementById('rvList');
   if(!list) return;
   list.innerHTML = '';
-  // Journey albums scored 85+
-  var journeyItems = (window.ALBUMS||[]).filter(function(a){return a.sc>=85;}).sort(function(a,b){return b.sc-a.sc;});
-  // Rated past/discover albums not in the Journey
-  var albumKeys = {};
-  (window.ALBUMS||[]).forEach(function(a){ albumKeys[(a.ar||'')+'|'+(a.al||'')] = true; });
-  var relistenItems = (window.REVISIT_RATINGS||[]).filter(function(r){ return !albumKeys[(r.ar||'')+'|'+(r.al||'')]; });
-  if(!journeyItems.length && !relistenItems.length){list.innerHTML='<div class="q-empty">No albums yet.</div>';return;}
+  var ratedKeys = {};
+  (window.REVISIT_RATINGS||[]).forEach(function(r){ ratedKeys[(r.ar||'')+'|'+(r.al||'')] = true; });
+  // Journey albums scored 85+ that haven't been re-listened yet
+  var journeyItems = (window.ALBUMS||[]).filter(function(a){
+    return a.sc>=85 && !ratedKeys[(a.ar||'')+'|'+(a.al||'')];
+  }).sort(function(a,b){return b.sc-a.sc;});
+  if(!journeyItems.length){list.innerHTML='<div class="q-empty">No albums yet.</div>';return;}
   journeyItems.forEach(function(a){
     var albumId = getSpotifyId(a.au);
     var card = makeQCard({ar:a.ar,al:a.al,id:albumId,im:a.im,yr:a.yr,js:a.sc},{icon:ICON_REVISIT,section:'revisit'});
     card.appendChild(makeRateFooter({ar:a.ar,al:a.al,id:albumId,im:a.im||''}, a.sc, 'revisit', renderRevisit));
-    list.appendChild(card);
-  });
-  relistenItems.forEach(function(r){
-    var src = (window.HEARD_BEFORE_ALL||window.HEARD_BEFORE||[]).filter(function(h){ return h.ar===r.ar&&h.al===r.al; })[0] || {};
-    var im = r.im || src.im || '';
-    var card = makeQCard({ar:r.ar,al:r.al,id:r.id||'',im:im,yr:src.yr||'',js:r.js||null},{icon:ICON_PAST,section:'revisit'});
-    card.appendChild(makeRateFooter({ar:r.ar,al:r.al,id:r.id||'',im:im}, r.js||null, 'relisten', renderRevisit));
     list.appendChild(card);
   });
 }
