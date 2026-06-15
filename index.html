@@ -949,19 +949,29 @@ body{
   <!-- ── DISCOVER PANEL ── -->
   <div id="qt-discover" class="q-panel">
     <!-- ── PUBLIC SUGGESTION FORM ── -->
-    <div style="margin-bottom:20px;">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Suggest an Album</div>
+    <div style="margin-bottom:20px;background:rgba(11,21,32,0.55);border:1px solid rgba(91,155,248,0.14);border-radius:18px;padding:16px 16px 14px;box-shadow:0 4px 24px rgba(0,0,0,0.3);">
+      <div style="font-size:10px;font-weight:700;color:var(--sky);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:14px;opacity:0.75;">Suggest an Album</div>
+      <!-- Search -->
       <div style="position:relative;">
-        <input type="text" id="suggestSearch" placeholder="Search artist or album..." autocomplete="off" autocorrect="off" spellcheck="false" style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border-mid);border-radius:8px;padding:9px 12px;color:var(--text);font-size:16px;outline:none;">
-        <button id="suggestRandomBtn" style="width:100%;margin-top:6px;background:rgba(252,60,68,0.07);border:1px solid rgba(252,60,68,0.2);border-radius:8px;padding:9px 12px;color:#fc3c44;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-sizing:border-box;">&#127922; Random from Apple Music</button>
+        <input type="text" id="suggestSearch" placeholder="Search artist or album..." autocomplete="off" autocorrect="off" spellcheck="false" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(91,155,248,0.2);border-radius:10px;padding:10px 13px;color:var(--text);font-size:16px;outline:none;">
         <div id="suggestResults" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface2);border:1px solid var(--border-mid);border-radius:10px;z-index:50;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></div>
       </div>
-      <div id="suggestSelected" style="display:none;align-items:center;gap:10px;margin-top:8px;background:rgba(91,155,248,0.06);border:1px solid var(--border-mid);border-radius:8px;padding:8px 10px;"></div>
-      <div id="suggestEmbedWrap" style="display:none;margin-top:8px;border-radius:12px;overflow:hidden;">
+      <!-- or divider -->
+      <div style="display:flex;align-items:center;gap:10px;margin:11px 0;">
+        <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
+        <span style="font-size:10px;color:var(--dim);font-weight:600;">or</span>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
+      </div>
+      <!-- Random -->
+      <button id="suggestRandomBtn" style="width:100%;background:rgba(252,60,68,0.07);border:1px solid rgba(252,60,68,0.18);border-radius:10px;padding:10px 13px;color:#fc3c44;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-sizing:border-box;">&#127922; Random from Apple Music</button>
+      <!-- Selected album (inline, no box) -->
+      <div id="suggestSelected" style="display:none;align-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(91,155,248,0.12);"></div>
+      <!-- Embed player -->
+      <div id="suggestEmbedWrap" style="display:none;margin-top:10px;border-radius:12px;overflow:hidden;">
         <iframe id="suggestEmbedFrame" allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write" frameborder="0" height="175" style="width:100%;border-radius:12px;display:block;" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation" src=""></iframe>
       </div>
-      <input type="url" id="suggestSpotifyUrl" placeholder="Spotify URL (optional)" autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:16px;outline:none;">
-      <button id="suggestSubmitBtn" disabled style="width:100%;margin-top:8px;background:#2D6BE4;border:none;border-radius:8px;padding:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;opacity:0.4;">Suggest Album</button>
+      <!-- Submit -->
+      <button id="suggestSubmitBtn" disabled style="width:100%;margin-top:12px;background:var(--sky);border:none;border-radius:10px;padding:11px;color:#000;font-size:13px;font-weight:700;cursor:pointer;opacity:0.35;letter-spacing:0.02em;">Suggest Album</button>
     </div>
     <div style="border-top:1px solid var(--border);padding-top:16px;">
       <div id="dList" class="q-album-list"></div>
@@ -2161,7 +2171,7 @@ if (randomizerBtn) {
 
   function setSubmitEnabled(on) {
     submitEl.disabled = !on;
-    submitEl.style.opacity = on ? '1' : '0.4';
+    submitEl.style.opacity = on ? '1' : '0.35';
     submitEl.style.cursor  = on ? 'pointer' : 'default';
   }
 
@@ -2410,17 +2420,20 @@ var _lbSwipeStartY = 0;
 function renderGrid() {
   var wrap = document.getElementById('gridWrap');
   if (!wrap) return;
-  // Always rebuild so newly rated queue albums appear immediately
-  var all = buildHistoryData().filter(function(a){
-    return a.sc != null || a.rs != null;
-  }).sort(function(a,b){
-    var sa = a.rs != null ? a.rs : a.sc;
-    var sb = b.rs != null ? b.rs : b.sc;
-    return (sb||0) - (sa||0);
+  // Build from ALBUMS directly for reliability
+  var albums = (window.ALBUMS || []).slice().sort(function(a,b){ return (+b.sc||0)-(+a.sc||0); });
+  // Also include rated queue albums not in the Journey
+  var journeyKeys = {};
+  albums.forEach(function(a){ journeyKeys[(a.ar||'')+'|'+(a.al||'')] = true; });
+  (window.REVISIT_RATINGS||[]).forEach(function(r){
+    if (!journeyKeys[(r.ar||'')+'|'+(r.al||'')]) {
+      albums.push({ar:r.ar, al:r.al, sc:r.rs, im:r.im||'', yr:''});
+    }
   });
   wrap.innerHTML = '';
-  all.forEach(function(a) {
-    var sc = a.rs != null ? a.rs : a.sc;
+  albums.forEach(function(a) {
+    var sc = parseInt(a.sc) || 0;
+    if (!sc) return;
     var card = document.createElement('div');
     card.className = 'grid-card';
     if (a.im) {
@@ -2430,14 +2443,16 @@ function renderGrid() {
       img.alt = '';
       card.appendChild(img);
     } else {
-      card.style.cssText += 'background:linear-gradient(135deg,'+scoreColor(sc)+'55,'+scoreColor(sc)+'22);';
+      card.style.background = 'linear-gradient(135deg,'+scoreColor(sc)+'44,'+scoreColor(sc)+'18)';
     }
     var badge = document.createElement('span');
     badge.className = 'grid-score';
     badge.textContent = sc;
     badge.style.background = scoreColor(sc);
     card.appendChild(badge);
-    (function(c, album, score){ c.addEventListener('click', function(){ openGridLightbox(c, Object.assign({}, album, {sc: score})); }); })(card, a, sc);
+    (function(c, ar, al, score, im, yr){
+      c.addEventListener('click', function(){ openGridLightbox(c, {ar:ar, al:al, sc:score, im:im, yr:yr}); });
+    })(card, a.ar||'', a.al||'', sc, a.im||'', a.yr||'');
     wrap.appendChild(card);
   });
   updateGridZoom();
