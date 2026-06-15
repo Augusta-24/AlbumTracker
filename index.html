@@ -395,7 +395,7 @@ body{
 #qOnAirLight.live{opacity:1;animation:onAirBlink 1.4s ease-in-out infinite;}
 #qPlayerTop{display:flex;gap:14px;align-items:center;}
 @keyframes vinylSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-@keyframes vinylWobble{0%,100%{transform:translate(0,0);}25%{transform:translate(10px,-6px);}50%{transform:translate(4px,11px);}75%{transform:translate(-10px,-3px);}}
+@keyframes vinylWobble{0%,100%{transform:translate(0,0);}25%{transform:translate(5px,-3px);}50%{transform:translate(2px,6px);}75%{transform:translate(-5px,-2px);}}
 #qVinylWobble{position:absolute!important;inset:-55%;pointer-events:none;z-index:0!important;animation:vinylWobble 3.3s ease-in-out infinite;}
 #qVinylRings{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0%,rgba(255,255,255,0.13) 14%,transparent 28%,transparent 47%,rgba(255,255,255,0.07) 60%,transparent 74%),repeating-radial-gradient(circle at 50% 50%,transparent 0px,transparent 11px,rgba(91,155,248,0.13) 11px,rgba(91,155,248,0.13) 12px);animation:vinylSpin 9s linear infinite;}
 .q-propped-art{
@@ -848,11 +848,11 @@ body{
     <button class="filter-pill" data-tier="70">70&ndash;79</button>
     <button class="filter-pill" data-tier="low">Under 70</button>
   </div>
-  <div class="score-legend"><span class="legend-swatch"><span class="legend-dot" style="background:#E07070"></span>&lt;50</span><span class="legend-swatch"><span class="legend-dot" style="background:#fb923c"></span>50&ndash;69</span><span class="legend-swatch"><span class="legend-dot" style="background:#5B9BF8"></span>70&ndash;89</span><span class="legend-swatch"><span class="legend-dot" style="background:#F5C842"></span>90+ &#9733;</span></div>
   <div class="search-row">
     <input type="text" id="searchInput" placeholder="Search artist or album..." autocomplete="off" autocorrect="off" spellcheck="false">
     <span id="albumCount">500 albums</span>
   </div>
+  <div class="score-legend"><span class="legend-swatch"><span class="legend-dot" style="background:#E07070"></span>&lt;50</span><span class="legend-swatch"><span class="legend-dot" style="background:#fb923c"></span>50&ndash;69</span><span class="legend-swatch"><span class="legend-dot" style="background:#5B9BF8"></span>70&ndash;89</span><span class="legend-swatch"><span class="legend-dot" style="background:#F5C842"></span>90+ &#9733;</span></div>
   <div class="table-wrap">
     <table id="albumTable">
       <thead>
@@ -1039,6 +1039,7 @@ function fetchAllData(cb) {
     .then(function(data) {
       if (data.error) throw new Error(data.error);
       window.ALBUMS = data.journey || [];
+      window.HEARD_BEFORE_ALL = data.past || [];  // full list kept for image lookup
       window.HEARD_BEFORE = data.past || [];
       window.DISCOVER_QUEUE = data.discover || [];
       window.REVISIT_RATINGS = data.revisit || [];
@@ -1567,8 +1568,8 @@ function buildHistoryData() {
     var key = (r.ar||'')+'|'+(r.al||'');
     if (seen[key]) return;
     seen[key] = true;
-    var src = (window.HEARD_BEFORE||[]).filter(function(h){ return h.ar===r.ar&&h.al===r.al; })[0] || {};
-    result.push({ar:r.ar,al:r.al,sc:null,rs:r.rs,js:r.js,d:null,yr:src.yr||'',im:src.im||'',au:src.au||'',am:src.am||'',id:r.id||src.id||'',dt:r.dt||'',th:'',wh:'',tr:'',type:'relisten'});
+    var src = (window.HEARD_BEFORE_ALL||window.HEARD_BEFORE||[]).filter(function(h){ return h.ar===r.ar&&h.al===r.al; })[0] || {};
+    result.push({ar:r.ar,al:r.al,sc:null,rs:r.rs,js:r.js,d:null,yr:src.yr||'',im:r.im||src.im||'',au:src.au||'',am:src.am||'',id:r.id||src.id||'',dt:r.dt||'',th:'',wh:'',tr:'',type:'relisten'});
   });
   return result;
 }
@@ -1883,7 +1884,7 @@ function rateAlbum(albumData, journeyScore, source, onDone) {
       if (res.ok) {
         var existing = findRating(albumData.id, albumData.ar, albumData.al);
         if (existing) { existing.rs = score; }
-        else { (window.REVISIT_RATINGS=window.REVISIT_RATINGS||[]).push({id:albumData.id||'',ar:albumData.ar,al:albumData.al,js:journeyScore,rs:score}); }
+        else { (window.REVISIT_RATINGS=window.REVISIT_RATINGS||[]).push({id:albumData.id||'',ar:albumData.ar,al:albumData.al,js:journeyScore,rs:score,im:albumData.im||''}); }
         if (source === 'discover') {
           window.DISCOVER_QUEUE = (window.DISCOVER_QUEUE||[]).filter(function(d){ return !(d.ar===albumData.ar && d.al===albumData.al); });
         }
@@ -1936,7 +1937,7 @@ function renderGrowingUp(filter) {
   if(!items.length){list.innerHTML='<div class="q-empty">No albums found.</div>';return;}
   items.forEach(function(a){
     var card = makeQCard(a, {icon:ICON_PAST, section:'growup'});
-    card.appendChild(makeRateFooter({ar:a.ar, al:a.al, id:a.id||''}, null, 'past', function(){ renderGrowingUp(filter||''); }));
+    card.appendChild(makeRateFooter({ar:a.ar, al:a.al, id:a.id||'', im:a.im||''}, null, 'past', function(){ renderGrowingUp(filter||''); }));
     list.appendChild(card);
   });
 }
@@ -1945,12 +1946,24 @@ function renderRevisit() {
   var list = document.getElementById('rvList');
   if(!list) return;
   list.innerHTML = '';
-  var items = (window.ALBUMS||[]).filter(function(a){return a.sc>=85;}).sort(function(a,b){return b.sc-a.sc;});
-  if(!items.length){list.innerHTML='<div class="q-empty">No albums yet.</div>';return;}
-  items.forEach(function(a){
+  // Journey albums scored 85+
+  var journeyItems = (window.ALBUMS||[]).filter(function(a){return a.sc>=85;}).sort(function(a,b){return b.sc-a.sc;});
+  // Rated past/discover albums not in the Journey
+  var albumKeys = {};
+  (window.ALBUMS||[]).forEach(function(a){ albumKeys[(a.ar||'')+'|'+(a.al||'')] = true; });
+  var relistenItems = (window.REVISIT_RATINGS||[]).filter(function(r){ return !albumKeys[(r.ar||'')+'|'+(r.al||'')]; });
+  if(!journeyItems.length && !relistenItems.length){list.innerHTML='<div class="q-empty">No albums yet.</div>';return;}
+  journeyItems.forEach(function(a){
     var albumId = getSpotifyId(a.au);
     var card = makeQCard({ar:a.ar,al:a.al,id:albumId,im:a.im,yr:a.yr,js:a.sc},{icon:ICON_REVISIT,section:'revisit'});
-    card.appendChild(makeRateFooter({ar:a.ar,al:a.al,id:albumId}, a.sc, 'revisit', renderRevisit));
+    card.appendChild(makeRateFooter({ar:a.ar,al:a.al,id:albumId,im:a.im||''}, a.sc, 'revisit', renderRevisit));
+    list.appendChild(card);
+  });
+  relistenItems.forEach(function(r){
+    var src = (window.HEARD_BEFORE_ALL||window.HEARD_BEFORE||[]).filter(function(h){ return h.ar===r.ar&&h.al===r.al; })[0] || {};
+    var im = r.im || src.im || '';
+    var card = makeQCard({ar:r.ar,al:r.al,id:r.id||'',im:im,yr:src.yr||'',js:r.js||null},{icon:ICON_PAST,section:'revisit'});
+    card.appendChild(makeRateFooter({ar:r.ar,al:r.al,id:r.id||'',im:im}, r.js||null, 'relisten', renderRevisit));
     list.appendChild(card);
   });
 }
