@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Album Journey</title>
+<title>Album Eras</title>
 <!-- BUILD: 2026-06-14-v3 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&display=swap" rel="stylesheet">
@@ -531,10 +531,10 @@ body{
 <div id="page-journey" class="page active">
   <!-- HERO -->
   <div class="hero">
-    <div class="hero-title">Album Journey</div>
-    <div class="hero-sub">500 albums &middot; Apr 27, 2025 &mdash; Jun 13, 2026 &middot; 335 days</div>
+    <div class="hero-title">Album Eras</div>
+    <div class="hero-sub">500 albums &middot; Apr 27, 2025 &mdash; Mar 26, 2026 &middot; 334 days</div>
     <div class="stat-pills">
-      <span class="stat-pill">335 days</span>
+      <span class="stat-pill">334 days</span>
       <span class="stat-pill">324 artists</span>
       <span class="stat-pill">29 scored 90+</span>
       <span class="stat-pill">avg 72</span>
@@ -807,8 +807,8 @@ body{
     </div>
         <!-- FINISH CARD -->
         <div class="finish-card">
-          <div class="finish-date">June 13, 2026</div>
-          <div class="finish-sub">Day 335 &middot; 500 albums &middot; 324 artists</div>
+          <div class="finish-date">March 26, 2026</div>
+          <div class="finish-sub">Day 334 &middot; 500 albums &middot; 324 artists</div>
           <div class="finish-stats">
             <span class="finish-stat">29 scored 90+</span>
             <span class="finish-stat">1 perfect 100</span>
@@ -824,7 +824,7 @@ body{
 <div id="page-history" class="page">
   <div class="page-header">
     <div class="page-title">All Albums</div>
-    <div class="page-sub">Complete listening log &middot; Apr 2025 &ndash; Jun 2026</div>
+    <div class="page-sub">Complete listening log &middot; Apr 2025 &ndash; Mar 2026</div>
   </div>
   <div class="filter-row" id="recentFilter" style="padding-bottom:4px;">
     <button class="filter-pill" data-era="recent">Recent</button>
@@ -1155,7 +1155,7 @@ function initTimeline() {
   ctx.scale(DPR, DPR);
 
   var pts = window.TIMELINE; // [[day, score], ...]
-  var maxDay = 335;
+  var maxDay = 334;
   var pad = { l: 34, r: 12, t: 14, b: 22 };
   var cW = W - pad.l - pad.r;
   var cH = H - pad.t - pad.b;
@@ -1190,7 +1190,7 @@ function initTimeline() {
   // x-axis labels
   ctx.fillStyle = 'rgba(122,156,192,0.55)';
   ctx.textAlign = 'left';  ctx.fillText('Day 1',   pad.l,       H - 5);
-  ctx.textAlign = 'right'; ctx.fillText('Day 335', W - pad.r,   H - 5);
+  ctx.textAlign = 'right'; ctx.fillText('Day 334', W - pad.r,   H - 5);
 
   // Avg dashed line at 72
   var avgY = ptY(72);
