@@ -498,8 +498,8 @@ body{
 .q-empty{text-align:center;color:var(--dim);font-size:13px;padding:28px 0;}
 /* ---- GRID TAB ---- */
 #page-grid{padding:0 0 80px;}
-.grid-card{aspect-ratio:1;transform:var(--wave,none);transition:transform 0.07s linear;z-index:0;}
-@media(hover:hover){.grid-card:hover{transform:scale(1.85)!important;z-index:10;transition:transform 0.15s ease;}}
+@keyframes tileRoll{0%,100%{transform:scale(1);filter:brightness(0.88);}50%{transform:scale(1.1);filter:brightness(1.14);}}
+.grid-card{aspect-ratio:1;animation:tileRoll 3s ease-in-out infinite;}
 /* Lightbox */
 #gridLightbox{display:none;position:fixed;inset:0;z-index:8500;}
 #gridLbBackdrop{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background 0.35s ease;}
@@ -984,7 +984,7 @@ body{
 
 <div id="page-grid" class="page">
   <div id="gridStatus" style="display:none;padding:16px;font-size:12px;color:var(--muted);text-align:center;"></div>
-  <div id="gridWrap" style="display:grid;grid-template-columns:repeat(10,1fr);gap:0;"></div>
+  <div id="gridWrap" style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;"></div>
 </div>
 
 <div id="gridLightbox">
@@ -2412,31 +2412,6 @@ window.addEventListener('load', function() {
 // ---- GRID TAB ----
 var _lbOrigin = null;
 var _gridCards = [];
-var _gridWaveRaf = null;
-
-function _runGridWave() {
-  var vc_y = window.scrollY + window.innerHeight / 2;
-  var vc_x = window.innerWidth / 2;
-  var zone  = window.innerHeight * 0.55;
-  _gridCards.forEach(function(card) {
-    var dy   = card._cy - vc_y;
-    var dx   = card._cx - vc_x;
-    var dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > zone * 1.6) { card.style.removeProperty('--wave'); return; }
-    var t      = Math.max(0, 1 - dist / zone);
-    var scale  = 1 + 0.28 * t * t;
-    var tilt   = (-(dx / vc_x) * 14 * (1 - t * 0.6)).toFixed(1);   // bowl: edge tiles lean inward
-    var lift   = (-t * t * 6).toFixed(1);                            // center floats up
-    card.style.setProperty('--wave', 'scale('+scale.toFixed(3)+') rotate('+tilt+'deg) translateY('+lift+'px)');
-  });
-}
-
-window.addEventListener('scroll', function() {
-  var pg = document.querySelector('.page.active');
-  if (!pg || pg.id !== 'page-grid') return;
-  if (_gridWaveRaf) return;
-  _gridWaveRaf = requestAnimationFrame(function() { _gridWaveRaf = null; _runGridWave(); });
-}, {passive:true});
 var _lbPinchDist = 0;
 var _lbPinchScale = 1;
 var _lbPinchBase = 1;
@@ -2478,7 +2453,10 @@ function renderGrid() {
         var col = sc ? window.scoreColor(sc) : '#334';
         var card = document.createElement('div');
         card.className = 'grid-card';
-        card.style.cssText = 'position:relative;overflow:hidden;cursor:pointer;background:'+col+'44;';
+        var col_i = count % 7;
+        var row_i = Math.floor(count / 7);
+        var delay = -((col_i * 0.2 + row_i * 0.11) % 3).toFixed(2);
+        card.style.cssText = 'position:relative;overflow:hidden;cursor:pointer;background:'+col+'44;animation-delay:'+delay+'s;';
         if (a.im) {
           var img = document.createElement('img');
           img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;';
@@ -2494,17 +2472,23 @@ function renderGrid() {
           card.appendChild(badge);
         }
         (function(c, ar, al, score, im, yr){
+          c.addEventListener('mouseenter', function(){
+            c.style.animationPlayState = 'paused';
+            c.style.transform = 'scale(1.9)';
+            c.style.transition = 'transform 0.15s ease';
+            c.style.zIndex = '10';
+          });
+          c.addEventListener('mouseleave', function(){
+            c.style.animationPlayState = 'running';
+            c.style.transform = '';
+            c.style.transition = '';
+            c.style.zIndex = '';
+          });
           c.addEventListener('click', function(){ openGridLightbox(c, {ar:ar, al:al, sc:score, im:im, yr:yr}); });
         })(card, a.ar||'', a.al||'', sc, a.im||'', a.yr||'');
         wrap.appendChild(card);
       });
-      // Cache center positions for wave math (no per-frame DOM reads)
       _gridCards = Array.prototype.slice.call(wrap.querySelectorAll('.grid-card'));
-      _gridCards.forEach(function(c) {
-        c._cx = c.offsetLeft + c.offsetWidth / 2;
-        c._cy = c.offsetTop  + c.offsetHeight / 2;
-      });
-      _runGridWave();
       if (status) {
         if (count > 0) { status.style.display = 'none'; }
         else { status.textContent = 'No albums yet.'; }
