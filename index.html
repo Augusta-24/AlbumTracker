@@ -393,9 +393,9 @@ body{
 #qOnAirLight.live{opacity:1;animation:onAirBlink 1.4s ease-in-out infinite;}
 #qPlayerTop{display:flex;gap:14px;align-items:center;}
 @keyframes vinylSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-@keyframes vinylWobble{0%,100%{transform:translate(0,0);}25%{transform:translate(4px,-2px);}50%{transform:translate(1px,4px);}75%{transform:translate(-4px,-1px);}}
-#qVinylWobble{position:absolute;inset:-55%;pointer-events:none;z-index:0;animation:vinylWobble 3.3s ease-in-out infinite;}
-#qVinylRings{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0%,rgba(255,255,255,0.018) 18%,transparent 38%,transparent 52%,rgba(255,255,255,0.011) 72%,transparent 90%),repeating-radial-gradient(circle at 50% 50%,transparent 0px,transparent 11px,rgba(91,155,248,0.11) 11px,rgba(91,155,248,0.11) 12px);animation:vinylSpin 9s linear infinite;}
+@keyframes vinylWobble{0%,100%{transform:translate(0,0);}25%{transform:translate(14px,-8px);}50%{transform:translate(5px,16px);}75%{transform:translate(-14px,-4px);}}
+#qVinylWobble{position:absolute!important;inset:-55%;pointer-events:none;z-index:0!important;animation:vinylWobble 3.3s ease-in-out infinite;}
+#qVinylRings{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0%,rgba(255,255,255,0.13) 14%,transparent 28%,transparent 47%,rgba(255,255,255,0.07) 60%,transparent 74%),repeating-radial-gradient(circle at 50% 50%,transparent 0px,transparent 11px,rgba(91,155,248,0.13) 11px,rgba(91,155,248,0.13) 12px);animation:vinylSpin 9s linear infinite;}
 .q-propped-art{
   width:76px;height:76px;border-radius:8px;object-fit:cover;
   transform:rotate(-7deg);
@@ -824,12 +824,9 @@ body{
     <div class="page-title">All Albums</div>
     <div class="page-sub">Complete listening log &middot; Apr 2025 &ndash; Jun 2026</div>
   </div>
-  <div id="recentSection" style="display:none;margin-bottom:20px;">
-    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Recently Listened</div>
-    <div id="recentStrip" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
-  </div>
   <div class="filter-row" id="eraFilters">
     <button class="filter-pill" data-era="all" style="background:var(--sky);color:#000;border-color:var(--sky)">All</button>
+    <button class="filter-pill" data-era="recent">Recent</button>
     <button class="filter-pill" data-era="1950">50s</button>
     <button class="filter-pill" data-era="1960">60s</button>
     <button class="filter-pill" data-era="1970">70s</button>
@@ -946,6 +943,10 @@ body{
     <div style="border-top:1px solid var(--border);padding-top:16px;">
       <div id="dList" class="q-album-list"></div>
     </div>
+    <div id="suggestionsSection" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Fan Suggestions</div>
+      <div id="suggestList" class="q-album-list"></div>
+    </div>
   </div>
 
 </div>
@@ -1035,6 +1036,7 @@ function fetchAllData(cb) {
       window.HEARD_BEFORE = data.past || [];
       window.DISCOVER_QUEUE = data.discover || [];
       window.REVISIT_RATINGS = data.revisit || [];
+      window.SUGGESTIONS = data.suggestions || [];
       computeDerivedData();
       var _ratedKeys = {};
       (window.REVISIT_RATINGS||[]).forEach(function(r){ _ratedKeys[(r.ar||'')+'|'+(r.al||'')] = true; });
@@ -1597,6 +1599,25 @@ var TIER_COLORS = {'90':'#F5C842','80':'#5B9BF8','70':'#fb923c','low':'#E07070'}
 function applyFilters() {
   var el = document.getElementById('searchInput');
   var q = el ? el.value.toLowerCase().trim() : '';
+  if (activeEra === 'recent') {
+    var cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    filteredData = (window.ALBUMS||[]).filter(function(a) {
+      if (q && (a.al||'').toLowerCase().indexOf(q)===-1 && (a.ar||'').toLowerCase().indexOf(q)===-1) return false;
+      var d = a.dt ? new Date(a.dt) : null;
+      if (!d || isNaN(d.getTime()) || d < cutoff) return false;
+      if (activeTier !== 'all') {
+        var sc = parseInt(a.sc)||0;
+        if (activeTier==='90'&&sc<90) return false;
+        if (activeTier==='80'&&(sc<80||sc>=90)) return false;
+        if (activeTier==='70'&&(sc<70||sc>=80)) return false;
+        if (activeTier==='low'&&sc>=70) return false;
+      }
+      return true;
+    }).sort(function(a,b){ return new Date(b.dt)-new Date(a.dt); });
+    renderHistory();
+    return;
+  }
   filteredData = window.ALBUMS.filter(function(a) {
     if (q && (a.al||'').toLowerCase().indexOf(q) === -1 && (a.ar||'').toLowerCase().indexOf(q) === -1) return false;
     if (activeEra !== 'all') {
@@ -1706,10 +1727,15 @@ function selectQAlbum(a, cardEl, source, journeyScore) {
   var scoreEl = document.getElementById('qPlayerScore');
   if(scoreEl){
     var existingRating = findRating(a.id, a.ar, a.al);
+    var jScore = journeyScore || a.js || a.sc || null;
     if(existingRating){
       var rsBg = scoreColor(existingRating.rs);
-      var jsPart = existingRating.js ? '<span style="color:var(--muted);font-size:10px;">Journey</span> <span style="font-weight:700;color:'+scoreColor(existingRating.js)+';">'+existingRating.js+'</span><span style="color:var(--dim);margin:0 4px;">&#8594;</span>' : '';
+      var jsVal = existingRating.js || jScore;
+      var jsPart = jsVal ? '<span style="color:var(--muted);font-size:10px;">Journey</span> <span style="font-weight:700;color:'+scoreColor(jsVal)+';">'+jsVal+'</span><span style="color:var(--dim);margin:0 4px;">&#8594;</span>' : '';
       scoreEl.innerHTML = jsPart+'<span style="color:var(--muted);font-size:10px;">Score</span> <span style="font-weight:700;color:'+rsBg+';">'+existingRating.rs+'</span>';
+      scoreEl.style.display='block';
+    } else if(jScore){
+      scoreEl.innerHTML = '<span style="color:var(--muted);font-size:10px;">Journey</span> <span style="font-weight:700;color:'+scoreColor(jScore)+';">'+jScore+'</span>';
       scoreEl.style.display='block';
     } else { scoreEl.style.display='none'; }
   }
@@ -1914,6 +1940,37 @@ function renderDiscover() {
     footer.appendChild(rateFooter);
     footer.appendChild(rmBtn);
     card.appendChild(footer);
+    list.appendChild(card);
+  });
+  renderSuggestions();
+}
+
+function renderSuggestions() {
+  var section = document.getElementById('suggestionsSection');
+  var list    = document.getElementById('suggestList');
+  if (!section || !list) return;
+  var items = window.SUGGESTIONS || [];
+  if (!items.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  list.innerHTML = '';
+  items.forEach(function(s) {
+    var card = makeQCard(s, {icon:ICON_DISCOVER, section:'suggest'});
+    var addBtn = document.createElement('button');
+    addBtn.textContent = '+ Add to Queue';
+    addBtn.style.cssText = 'display:block;width:100%;margin:4px 0 6px;background:rgba(45,107,228,0.12);border:1px solid rgba(45,107,228,0.3);border-radius:8px;padding:6px;color:#5B9BF8;font-size:11px;font-weight:600;cursor:pointer;text-align:center;';
+    addBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      requirePin(function(pin) {
+        apiPost({action:'addDiscover',artist:s.ar,album:s.al,id:s.id||'',im:s.im||'',yr:s.yr||'',pin:pin}, function(res) {
+          if (res.ok) {
+            window.SUGGESTIONS = (window.SUGGESTIONS||[]).filter(function(x){ return !(x.ar===s.ar&&x.al===s.al); });
+            window.DISCOVER_QUEUE = (window.DISCOVER_QUEUE||[]).concat([s]);
+            renderDiscover();
+          } else { alert(res.error||'Failed'); }
+        });
+      });
+    });
+    card.appendChild(addBtn);
     list.appendChild(card);
   });
 }
@@ -2152,7 +2209,6 @@ function renderRecentlyListened() {
 window.addEventListener('load', function() {
   fetchAllData(function() {
     filteredData = window.ALBUMS.slice();
-    renderRecentlyListened();
     drawRoad();
     drawTraveler(0);
     renderQueue();
