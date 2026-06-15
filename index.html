@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Album Journey</title>
+<!-- BUILD: 2026-06-14-v3 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&display=swap" rel="stylesheet">
 <style>
@@ -353,10 +354,11 @@ body{
 
 /* FILTER PILLS */
 .filter-row{
-  display:flex;gap:6px;overflow-x:auto;padding:0 0 8px;
+  display:flex;gap:6px;overflow-x:auto;padding:0 0 8px;align-items:center;
   -webkit-overflow-scrolling:touch;scrollbar-width:none;
 }
 .filter-row::-webkit-scrollbar{display:none;}
+.filter-label{flex-shrink:0;font-size:10px;font-weight:700;color:var(--dim);letter-spacing:0.06em;text-transform:uppercase;padding-right:2px;}
 .filter-pill{
   flex-shrink:0;padding:4px 12px;border-radius:20px;
   font-size:11px;font-weight:600;
@@ -393,7 +395,7 @@ body{
 #qOnAirLight.live{opacity:1;animation:onAirBlink 1.4s ease-in-out infinite;}
 #qPlayerTop{display:flex;gap:14px;align-items:center;}
 @keyframes vinylSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-@keyframes vinylWobble{0%,100%{transform:translate(0,0);}25%{transform:translate(14px,-8px);}50%{transform:translate(5px,16px);}75%{transform:translate(-14px,-4px);}}
+@keyframes vinylWobble{0%,100%{transform:translate(0,0);}25%{transform:translate(10px,-6px);}50%{transform:translate(4px,11px);}75%{transform:translate(-10px,-3px);}}
 #qVinylWobble{position:absolute!important;inset:-55%;pointer-events:none;z-index:0!important;animation:vinylWobble 3.3s ease-in-out infinite;}
 #qVinylRings{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0%,rgba(255,255,255,0.13) 14%,transparent 28%,transparent 47%,rgba(255,255,255,0.07) 60%,transparent 74%),repeating-radial-gradient(circle at 50% 50%,transparent 0px,transparent 11px,rgba(91,155,248,0.13) 11px,rgba(91,155,248,0.13) 12px);animation:vinylSpin 9s linear infinite;}
 .q-propped-art{
@@ -824,9 +826,12 @@ body{
     <div class="page-title">All Albums</div>
     <div class="page-sub">Complete listening log &middot; Apr 2025 &ndash; Jun 2026</div>
   </div>
-  <div class="filter-row" id="eraFilters">
-    <button class="filter-pill" data-era="all" style="background:var(--sky);color:#000;border-color:var(--sky)">All</button>
+  <div class="filter-row" id="recentFilter" style="padding-bottom:4px;">
     <button class="filter-pill" data-era="recent">Recent</button>
+  </div>
+  <div class="filter-row" id="eraFilters">
+    <span class="filter-label">Era:</span>
+    <button class="filter-pill" data-era="all" style="background:var(--sky);color:#000;border-color:var(--sky)">All</button>
     <button class="filter-pill" data-era="1950">50s</button>
     <button class="filter-pill" data-era="1960">60s</button>
     <button class="filter-pill" data-era="1970">70s</button>
@@ -836,6 +841,7 @@ body{
     <button class="filter-pill" data-era="2010">10s</button>
   </div>
   <div class="filter-row" id="scoreFilters">
+    <span class="filter-label">Rating:</span>
     <button class="filter-pill" data-tier="all" style="background:var(--sky);color:#000;border-color:var(--sky)">All</button>
     <button class="filter-pill" data-tier="90">90+</button>
     <button class="filter-pill" data-tier="80">80&ndash;89</button>
@@ -944,7 +950,7 @@ body{
       <div id="dList" class="q-album-list"></div>
     </div>
     <div id="suggestionsSection" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Fan Suggestions</div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Suggestions</div>
       <div id="suggestList" class="q-album-list"></div>
     </div>
   </div>
@@ -982,8 +988,8 @@ body{
 <div id="loadingOverlay" style="position:fixed;inset:0;background:#0b1520;display:flex;align-items:center;justify-content:center;z-index:9999;">
   <div style="text-align:center;">
     <div style="font-size:36px;margin-bottom:14px;">&#9835;</div>
-    <div style="font-size:15px;color:#5B9BF8;font-weight:700;letter-spacing:.5px;">Album Journey</div>
-    <div style="font-size:12px;color:#7A9CC0;margin-top:8px;">Loading your journey...</div>
+    <div style="font-size:15px;color:#5B9BF8;font-weight:700;letter-spacing:.5px;">Album Tracker</div>
+    <div style="font-size:12px;color:#7A9CC0;margin-top:8px;">Loading...</div>
   </div>
 </div>
 <div id="pinModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9998;align-items:center;justify-content:center;">
@@ -1538,21 +1544,56 @@ function sortData(data, col, asc) {
 
 
 
+function buildHistoryData() {
+  var revisitMap = {};
+  (window.REVISIT_RATINGS || []).forEach(function(r) {
+    revisitMap[(r.ar||'')+'|'+(r.al||'')] = r;
+  });
+  var seen = {};
+  var result = [];
+  // Journey albums (with revisit score merged in if it exists)
+  (window.ALBUMS || []).forEach(function(a) {
+    var key = (a.ar||'')+'|'+(a.al||'');
+    seen[key] = true;
+    var rev = revisitMap[key];
+    if (rev) {
+      result.push({ar:a.ar,al:a.al,sc:a.sc,rs:rev.rs,d:a.d,yr:a.yr,im:a.im,au:a.au,am:a.am,id:a.id,dt:rev.dt||a.dt,th:a.th,wh:a.wh,tr:a.tr,type:'journey'});
+    } else {
+      result.push(a);
+    }
+  });
+  // Re-listens that aren't in the Journey (past/discover albums you rated)
+  (window.REVISIT_RATINGS || []).forEach(function(r) {
+    var key = (r.ar||'')+'|'+(r.al||'');
+    if (seen[key]) return;
+    seen[key] = true;
+    var src = (window.HEARD_BEFORE||[]).filter(function(h){ return h.ar===r.ar&&h.al===r.al; })[0] || {};
+    result.push({ar:r.ar,al:r.al,sc:null,rs:r.rs,js:r.js,d:null,yr:src.yr||'',im:src.im||'',au:src.au||'',am:src.am||'',id:r.id||src.id||'',dt:r.dt||'',th:'',wh:'',tr:'',type:'relisten'});
+  });
+  return result;
+}
+
 function renderHistory() {
   var tbody = document.getElementById('albumTbody');
   if (!tbody) return;
   var sorted = sortData(filteredData, sortCol, sortAsc);
   var html = '';
   sorted.forEach(function(a, idx) {
-    var sc = a.sc;
-    var bg = scoreColor(sc);
-    var suffix = sc >= 90 ? ' *' : '';
+    var primarySc = a.sc != null ? a.sc : a.rs;
+    var bg = scoreColor(primarySc);
+    var suffix = primarySc >= 90 ? ' ★' : '';
     var thumb = a.im ? '<img src="' + a.im + '" width="36" height="36" loading="lazy" style="object-fit:cover;border-radius:4px;display:block;">' : '';
+    var scoreHtml;
+    if (a.sc != null && a.rs != null) {
+      scoreHtml = '<span class="score-pill" style="background:' + scoreColor(a.sc) + ';color:#000;">' + a.sc + '</span>' +
+        '<span style="color:var(--dim);font-size:10px;margin:0 2px;">&#8594;</span>' +
+        '<span class="score-pill" style="background:' + scoreColor(a.rs) + ';color:#000;">' + a.rs + '</span>';
+    } else {
+      scoreHtml = '<span class="score-pill" style="background:' + bg + ';color:#000;">' + primarySc + suffix + '</span>';
+    }
     html += '<tr data-idx="' + idx + '">' +
-      '<td style="color:var(--dim);font-size:11px;">' + a.d + '</td>' +
-      '<td style="text-align:center;">' +
-        '<span class="score-pill" style="background:' + bg + ';color:#000;">' + sc + suffix + '</span>' +
-      '</td>' +
+      '<td style="color:var(--dim);font-size:11px;">' + (a.d || '—') + '</td>' +
+      '<td style="text-align:center;white-space:nowrap;">' + scoreHtml + '</td>' +
       '<td>' + thumb + '</td>' +
       '<td style="min-width:0;max-width:200px;overflow:hidden;">' +
         '<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;font-weight:500;">' + (a.al || '') + '</div>' +
@@ -1599,15 +1640,16 @@ var TIER_COLORS = {'90':'#F5C842','80':'#5B9BF8','70':'#fb923c','low':'#E07070'}
 function applyFilters() {
   var el = document.getElementById('searchInput');
   var q = el ? el.value.toLowerCase().trim() : '';
+  var base = buildHistoryData();
   if (activeEra === 'recent') {
     var cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 30);
-    filteredData = (window.ALBUMS||[]).filter(function(a) {
+    filteredData = base.filter(function(a) {
       if (q && (a.al||'').toLowerCase().indexOf(q)===-1 && (a.ar||'').toLowerCase().indexOf(q)===-1) return false;
       var d = a.dt ? new Date(a.dt) : null;
       if (!d || isNaN(d.getTime()) || d < cutoff) return false;
       if (activeTier !== 'all') {
-        var sc = parseInt(a.sc)||0;
+        var sc = parseInt(a.rs!=null?a.rs:a.sc)||0;
         if (activeTier==='90'&&sc<90) return false;
         if (activeTier==='80'&&(sc<80||sc>=90)) return false;
         if (activeTier==='70'&&(sc<70||sc>=80)) return false;
@@ -1618,14 +1660,14 @@ function applyFilters() {
     renderHistory();
     return;
   }
-  filteredData = window.ALBUMS.filter(function(a) {
+  filteredData = base.filter(function(a) {
     if (q && (a.al||'').toLowerCase().indexOf(q) === -1 && (a.ar||'').toLowerCase().indexOf(q) === -1) return false;
     if (activeEra !== 'all') {
       var decade = String(Math.floor((parseInt(a.yr)||0) / 10) * 10);
       if (decade !== activeEra) return false;
     }
     if (activeTier !== 'all') {
-      var sc = parseInt(a.sc) || 0;
+      var sc = parseInt(a.rs!=null?a.rs:a.sc) || 0;
       if (activeTier === '90' && sc < 90) return false;
       if (activeTier === '80' && (sc < 80 || sc >= 90)) return false;
       if (activeTier === '70' && (sc < 70 || sc >= 80)) return false;
@@ -1642,11 +1684,11 @@ if (searchInput) {
   searchInput.addEventListener('input', function() { applyFilters(); });
 }
 
-// Era filter pills
-document.querySelectorAll('#eraFilters .filter-pill').forEach(function(pill) {
+// Era + Recent filter pills (all elements with data-era attribute)
+document.querySelectorAll('[data-era]').forEach(function(pill) {
   pill.addEventListener('click', function() {
     activeEra = this.getAttribute('data-era');
-    document.querySelectorAll('#eraFilters .filter-pill').forEach(function(p) {
+    document.querySelectorAll('[data-era]').forEach(function(p) {
       p.style.background = ''; p.style.color = ''; p.style.borderColor = '';
     });
     var c = activeEra === 'all' ? 'var(--sky)' : (ERA_COLORS[activeEra] || 'var(--sky)');
@@ -2208,7 +2250,7 @@ function renderRecentlyListened() {
 // ---- INIT on load ----
 window.addEventListener('load', function() {
   fetchAllData(function() {
-    filteredData = window.ALBUMS.slice();
+    filteredData = buildHistoryData();
     drawRoad();
     drawTraveler(0);
     renderQueue();
