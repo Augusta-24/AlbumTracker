@@ -2022,6 +2022,7 @@ function renderSuggestions() {
       requirePin(function(pin) {
         apiPost({action:'addDiscover',artist:s.ar,album:s.al,id:s.id||'',im:s.im||'',yr:s.yr||'',pin:pin}, function(res) {
           if (res.ok) {
+            apiPost({action:'updateSuggestion',artist:s.ar,album:s.al,status:'added',pin:pin}, function(){});
             window.SUGGESTIONS = (window.SUGGESTIONS||[]).filter(function(x){ return !(x.ar===s.ar&&x.al===s.al); });
             window.DISCOVER_QUEUE = (window.DISCOVER_QUEUE||[]).concat([s]);
             renderDiscover();
@@ -2029,7 +2030,22 @@ function renderSuggestions() {
         });
       });
     });
+    var declineBtn = document.createElement('button');
+    declineBtn.textContent = 'Decline';
+    declineBtn.style.cssText = 'display:block;width:100%;margin:0 0 6px;background:rgba(200,60,60,0.08);border:1px solid rgba(200,60,60,0.25);border-radius:8px;padding:6px;color:#e06060;font-size:11px;font-weight:600;cursor:pointer;text-align:center;';
+    declineBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      requirePin(function(pin) {
+        apiPost({action:'updateSuggestion',artist:s.ar,album:s.al,status:'declined',pin:pin}, function(res) {
+          if (res.ok || !res.error) {
+            window.SUGGESTIONS = (window.SUGGESTIONS||[]).filter(function(x){ return !(x.ar===s.ar&&x.al===s.al); });
+            renderSuggestions();
+          } else { alert(res.error||'Failed'); }
+        });
+      });
+    });
     card.appendChild(addBtn);
+    card.appendChild(declineBtn);
     list.appendChild(card);
   });
 }
