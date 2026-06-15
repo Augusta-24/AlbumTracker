@@ -201,6 +201,7 @@ body{
 }
 .flyby-strip::-webkit-scrollbar{display:none;}
 #topAlbumsStrip::-webkit-scrollbar{display:none;}
+#recentStrip::-webkit-scrollbar{display:none;}
 .flyby-item{
   position:relative;flex-shrink:0;cursor:pointer;
 }
@@ -391,20 +392,10 @@ body{
 #qOnAirLight{width:8px;height:8px;border-radius:50%;background:#e07070;opacity:0.25;flex-shrink:0;transition:opacity 0.3s;}
 #qOnAirLight.live{opacity:1;animation:onAirBlink 1.4s ease-in-out infinite;}
 #qPlayerTop{display:flex;gap:14px;align-items:center;}
-.q-vinyl{
-  width:90px;height:90px;border-radius:50%;
-  background:conic-gradient(#111 0deg,#1a1a1a 5deg,#111 10deg,#1a1a1a 15deg,#111 20deg,#1a1a1a 25deg,#111 30deg,#1a1a1a 35deg,#111 40deg,#1a1a1a 45deg,#111 50deg,#1a1a1a 55deg,#111 60deg,#1a1a1a 65deg,#111 70deg,#1a1a1a 75deg,#111 80deg,#1a1a1a 85deg,#111 90deg,#1a1a1a 95deg,#111 100deg,#1a1a1a 105deg,#111 110deg,#1a1a1a 115deg,#111 120deg,#1a1a1a 125deg,#111 130deg,#1a1a1a 135deg,#111 140deg,#1a1a1a 145deg,#111 150deg,#1a1a1a 155deg,#111 160deg,#1a1a1a 165deg,#111 170deg,#1a1a1a 175deg,#111 180deg,#1a1a1a 185deg,#111 190deg,#1a1a1a 195deg,#111 200deg,#1a1a1a 205deg,#111 210deg,#1a1a1a 215deg,#111 220deg,#1a1a1a 225deg,#111 230deg,#1a1a1a 235deg,#111 240deg,#1a1a1a 245deg,#111 250deg,#1a1a1a 255deg,#111 260deg,#1a1a1a 265deg,#111 270deg,#1a1a1a 275deg,#111 280deg,#1a1a1a 285deg,#111 290deg,#1a1a1a 295deg,#111 300deg,#1a1a1a 305deg,#111 310deg,#1a1a1a 315deg,#111 320deg,#1a1a1a 325deg,#111 330deg,#1a1a1a 335deg,#111 340deg,#1a1a1a 345deg,#111 350deg,#1a1a1a 355deg,#111 360deg);
-  box-shadow:0 0 0 2px #222,0 0 0 8px #1a1a1a,0 0 0 10px #222,0 4px 20px rgba(0,0,0,0.8);
-  position:relative;flex-shrink:0;
-  animation:spin 3s linear infinite;cursor:pointer;
-}
-.q-vinyl.paused{animation-play-state:paused;}
-.q-vinyl-label{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:36px;height:36px;border-radius:50%;
-  background-size:cover;background-position:center;
-  box-shadow:0 2px 8px rgba(0,0,0,0.6);
-}
+@keyframes vinylSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes vinylWobble{0%,100%{transform:translate(0,0);}25%{transform:translate(4px,-2px);}50%{transform:translate(1px,4px);}75%{transform:translate(-4px,-1px);}}
+#qVinylWobble{position:absolute;inset:-55%;pointer-events:none;z-index:0;animation:vinylWobble 3.3s ease-in-out infinite;}
+#qVinylRings{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0%,rgba(255,255,255,0.018) 18%,transparent 38%,transparent 52%,rgba(255,255,255,0.011) 72%,transparent 90%),repeating-radial-gradient(circle at 50% 50%,transparent 0px,transparent 11px,rgba(91,155,248,0.11) 11px,rgba(91,155,248,0.11) 12px);animation:vinylSpin 9s linear infinite;}
 .q-propped-art{
   width:76px;height:76px;border-radius:8px;object-fit:cover;
   transform:rotate(-7deg);
@@ -833,6 +824,10 @@ body{
     <div class="page-title">All Albums</div>
     <div class="page-sub">Complete listening log &middot; Apr 2025 &ndash; Jun 2026</div>
   </div>
+  <div id="recentSection" style="display:none;margin-bottom:20px;">
+    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Recently Listened</div>
+    <div id="recentStrip" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
+  </div>
   <div class="filter-row" id="eraFilters">
     <button class="filter-pill" data-era="all" style="background:var(--sky);color:#000;border-color:var(--sky)">All</button>
     <button class="filter-pill" data-era="1950">50s</button>
@@ -882,10 +877,8 @@ body{
       <div id="qOnAirLight"></div>
       <span style="font-size:10px;font-weight:700;color:rgba(91,155,248,0.45);letter-spacing:0.12em;text-transform:uppercase;">On Air</span>
     </div>
+    <div id="qVinylWobble"><div id="qVinylRings"></div></div>
     <div id="qPlayerTop">
-      <div class="q-vinyl" id="qVinylDisc">
-        <div class="q-vinyl-label" id="qVinylLabel"></div>
-      </div>
       <div class="q-propped-placeholder" id="qProppedPlaceholder">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--dim)"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
       </div>
@@ -894,7 +887,11 @@ body{
         <div class="q-player-album" id="qPlayerAlbum" style="color:var(--dim)">Select an album</div>
         <div class="q-player-artist" id="qPlayerArtist"></div>
         <div class="q-player-year" id="qPlayerYear"></div>
-        <a id="qPlayerSpLink" href="#" target="_blank" rel="noopener" style="display:none;margin-top:6px;font-size:12px;font-weight:600;color:var(--sky);text-decoration:none;">&#9654; Spotify</a>
+        <div id="qPlayerScore" style="display:none;margin-top:4px;font-size:11px;"></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+          <a id="qPlayerSpLink" href="#" target="_blank" rel="noopener" style="display:none;font-size:12px;font-weight:600;color:#1DB954;text-decoration:none;">&#9654; Spotify</a>
+          <a id="qPlayerAmLink" href="#" target="_blank" rel="noopener" style="display:none;font-size:12px;font-weight:600;color:#fc3c44;text-decoration:none;">&#9835; Apple Music</a>
+        </div>
       </div>
     </div>
     <div id="qSpotifyWrap" style="display:none;margin-top:12px;border-radius:10px;overflow:hidden;">
@@ -1578,7 +1575,10 @@ function renderHistory() {
       exp.className = 'expand-row';
       var wh = a.wh ? '<div style="margin-top:5px"><strong>Why it Matters:</strong> ' + a.wh + '</div>' : '';
       var tr = a.tr ? '<div style="margin-top:5px;color:var(--sky);"><strong>Tracks:</strong> ' + a.tr + '</div>' : '';
-      var sp = a.au ? '<div style="margin-top:8px"><a href="' + a.au + '" target="_blank" rel="noopener" style="color:#1DB954;font-size:12px;font-weight:600;text-decoration:none;">&#9654; Open in Spotify</a></div>' : '';
+      var sp = '';
+      if(a.au) sp += '<a href="'+a.au+'" target="_blank" rel="noopener" style="color:#1DB954;font-size:12px;font-weight:600;text-decoration:none;margin-right:14px;">&#9654; Spotify</a>';
+      if(a.am) sp += '<a href="'+a.am+'" target="_blank" rel="noopener" style="color:#fc3c44;font-size:12px;font-weight:600;text-decoration:none;">&#9835; Apple Music</a>';
+      if(sp) sp = '<div style="margin-top:8px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">'+sp+'</div>';
       if (!wh && !tr) wh = '<div style="color:var(--dim)">No notes available.</div>';
       exp.innerHTML = '<td colspan="4"><div class="expand-inner">' + wh + tr + sp + '</div></td>';
       this.after(exp);
@@ -1667,12 +1667,6 @@ ths.forEach(function(th) {
 var activeQCard = null;
 
 function selectQAlbum(a, cardEl, source, journeyScore) {
-  // Update vinyl label
-  var lbl = document.getElementById('qVinylLabel');
-  lbl.style.backgroundImage = a.im ? 'url(' + a.im + ')' : 'none';
-  // Resume spin
-  var vd = document.getElementById('qVinylDisc');
-  vd.classList.remove('paused');
   // Propped art — hide placeholder, show image
   var placeholder = document.getElementById('qProppedPlaceholder');
   var art = document.getElementById('qProppedArt');
@@ -1691,6 +1685,7 @@ function selectQAlbum(a, cardEl, source, journeyScore) {
   document.getElementById('qPlayerYear').textContent = a.yr ? a.yr : '';
   // Spotify link + embed
   var spLink = document.getElementById('qPlayerSpLink');
+  var amLink = document.getElementById('qPlayerAmLink');
   var spWrap = document.getElementById('qSpotifyWrap');
   var spFrame = document.getElementById('qSpotifyFrame');
   if(a.id){
@@ -1702,6 +1697,21 @@ function selectQAlbum(a, cardEl, source, journeyScore) {
     spLink.style.display = 'none';
     spFrame.src = '';
     spWrap.style.display = 'none';
+  }
+  if(amLink){
+    if(a.am){ amLink.href=a.am; amLink.style.display='inline'; }
+    else { amLink.style.display='none'; }
+  }
+  // Rating in player
+  var scoreEl = document.getElementById('qPlayerScore');
+  if(scoreEl){
+    var existingRating = findRating(a.id, a.ar, a.al);
+    if(existingRating){
+      var rsBg = scoreColor(existingRating.rs);
+      var jsPart = existingRating.js ? '<span style="color:var(--muted);font-size:10px;">Journey</span> <span style="font-weight:700;color:'+scoreColor(existingRating.js)+';">'+existingRating.js+'</span><span style="color:var(--dim);margin:0 4px;">&#8594;</span>' : '';
+      scoreEl.innerHTML = jsPart+'<span style="color:var(--muted);font-size:10px;">Score</span> <span style="font-weight:700;color:'+rsBg+';">'+existingRating.rs+'</span>';
+      scoreEl.style.display='block';
+    } else { scoreEl.style.display='none'; }
   }
   // Highlight card
   if(activeQCard) activeQCard.classList.remove('selected');
@@ -1914,11 +1924,7 @@ function renderQueue() {
   renderDiscover();
 }
 
-// Queue vinyl tap to pause
-var qVinylEl = document.getElementById('qVinylDisc');
-if(qVinylEl){
-  qVinylEl.addEventListener('click', function(){ this.classList.toggle('paused'); });
-}
+
 
 // Sub-tab switching
 var qtabs = document.querySelectorAll('.qtab');
@@ -1993,6 +1999,7 @@ if (randomizerBtn) {
           }
           data.results.forEach(function(r) {
             var art = (r.artworkUrl100||'').replace('100x100bb','300x300bb');
+            var amUrl = r.collectionViewUrl || '';
             var year = (r.releaseDate||'').substring(0,4);
             var item = document.createElement('div');
             item.style.cssText = 'display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);';
@@ -2005,7 +2012,7 @@ if (randomizerBtn) {
             item.addEventListener('mouseover', function(){ this.style.background='rgba(91,155,248,0.07)'; });
             item.addEventListener('mouseout',  function(){ this.style.background=''; });
             item.addEventListener('click', function() {
-              picked = { artist:r.artistName||'', album:r.collectionName||'', artUrl:art, year:year };
+              picked = { artist:r.artistName||'', album:r.collectionName||'', artUrl:art, year:year, amUrl:amUrl };
               resultsEl.style.display = 'none';
               searchEl.value = '';
               selectedEl.style.display = 'flex';
@@ -2044,6 +2051,7 @@ if (randomizerBtn) {
       artUrl:     picked.artUrl,
       year:       picked.year,
       spotifyUrl: spotifyEl ? spotifyEl.value.trim() : '',
+      amUrl:      picked.amUrl || '',
       notes:      ''
     }, function(res) {
       if (res.ok) {
@@ -2060,10 +2068,91 @@ if (randomizerBtn) {
   });
 })();
 
+// ---- RECENTLY LISTENED ----
+function renderRecentlyListened() {
+  var section = document.getElementById('recentSection');
+  var strip   = document.getElementById('recentStrip');
+  if (!section || !strip) return;
+
+  var cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+
+  function parseDate(s) {
+    if (!s) return null;
+    var d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Revisit ratings keyed by ar|al
+  var revisitMap = {};
+  (window.REVISIT_RATINGS||[]).forEach(function(r) {
+    revisitMap[(r.ar||'')+'|'+(r.al||'')] = r;
+  });
+
+  var recent = [];
+  var seen = {};
+
+  // Journey albums with a listen date in the last 30 days
+  (window.ALBUMS||[]).forEach(function(a) {
+    var d = parseDate(a.dt);
+    if (!d || d < cutoff) return;
+    var key = (a.ar||'')+'|'+(a.al||'');
+    if (seen[key]) return;
+    seen[key] = true;
+    var rev = revisitMap[key];
+    recent.push({ al:a.al, ar:a.ar, im:a.im, au:a.au, id:a.id,
+      js:a.sc, rs:rev ? rev.rs : null, date:d });
+  });
+
+  // Revisit ratings dated in the last 30 days not already captured
+  (window.REVISIT_RATINGS||[]).forEach(function(r) {
+    var d = parseDate(r.dt);
+    if (!d || d < cutoff) return;
+    var key = (r.ar||'')+'|'+(r.al||'');
+    if (seen[key]) return;
+    seen[key] = true;
+    var src = (window.ALBUMS||[]).filter(function(a){ return a.ar===r.ar && a.al===r.al; })[0] || {};
+    recent.push({ al:r.al, ar:r.ar, im:src.im||'', au:src.au||'', id:r.id||'',
+      js:src.sc||null, rs:r.rs, date:d });
+  });
+
+  if (!recent.length) { section.style.display = 'none'; return; }
+  recent.sort(function(a,b){ return b.date - a.date; });
+  section.style.display = 'block';
+
+  strip.innerHTML = '';
+  recent.forEach(function(a) {
+    var el = document.createElement('div');
+    el.style.cssText = 'flex-shrink:0;width:84px;' + (a.au ? 'cursor:pointer;' : '');
+
+    var scoreHtml;
+    if (a.js && a.rs) {
+      scoreHtml = '<div style="font-size:9px;margin-top:4px;display:flex;align-items:center;gap:3px;">' +
+        '<span style="font-weight:700;color:' + scoreColor(a.js) + ';">' + a.js + '</span>' +
+        '<span style="color:var(--dim);">&#8594;</span>' +
+        '<span style="font-weight:700;color:' + scoreColor(a.rs) + ';">' + a.rs + '</span>' +
+        '</div>';
+    } else {
+      var sc = a.js || a.rs;
+      scoreHtml = '<div style="font-size:9px;font-weight:700;color:' + scoreColor(sc) + ';margin-top:4px;">' + sc + '</div>';
+    }
+
+    el.innerHTML =
+      '<img src="' + (a.im||'') + '" style="width:84px;height:84px;border-radius:10px;display:block;object-fit:cover;box-shadow:0 3px 14px rgba(0,0,0,0.5);" loading="lazy" onerror="this.style.opacity=0">' +
+      '<div style="font-size:10px;font-weight:600;color:var(--text);margin-top:5px;width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (a.al||'') + '</div>' +
+      '<div style="font-size:9px;color:var(--muted);width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (a.ar||'') + '</div>' +
+      scoreHtml;
+
+    if (a.au) el.addEventListener('click', (function(url){ return function(){ window.open(url,'_blank','noopener'); }; })(a.au));
+    strip.appendChild(el);
+  });
+}
+
 // ---- INIT on load ----
 window.addEventListener('load', function() {
   fetchAllData(function() {
     filteredData = window.ALBUMS.slice();
+    renderRecentlyListened();
     drawRoad();
     drawTraveler(0);
     renderQueue();
