@@ -1773,11 +1773,7 @@ function selectQAlbum(a, cardEl, source, journeyScore) {
     var existingRating = findRating(a.id, a.ar, a.al);
     var jScore = journeyScore || a.js || a.sc || null;
     if(existingRating){
-      var rsBg = scoreColor(existingRating.rs);
-      var jsVal = existingRating.js || jScore;
-      var jsPart = jsVal ? '<span style="color:var(--muted);font-size:10px;">Journey</span> <span style="font-weight:700;color:'+scoreColor(jsVal)+';">'+jsVal+'</span><span style="color:var(--dim);margin:0 4px;">&#8594;</span>' : '';
-      scoreEl.innerHTML = jsPart+'<span style="color:var(--muted);font-size:10px;">Score</span> <span style="font-weight:700;color:'+rsBg+';">'+existingRating.rs+'</span>';
-      scoreEl.style.display='block';
+      scoreEl.style.display='none';
     } else if(jScore){
       scoreEl.innerHTML = '<span style="color:var(--muted);font-size:10px;">Journey</span> <span style="font-weight:700;color:'+scoreColor(jScore)+';">'+jScore+'</span>';
       scoreEl.style.display='block';
@@ -1893,6 +1889,7 @@ function rateAlbum(albumData, journeyScore, source, onDone) {
           window.HEARD_BEFORE = (window.HEARD_BEFORE||[]).filter(function(d){ return !(d.ar===albumData.ar && d.al===albumData.al); });
         }
         if (onDone) onDone();
+        if (source === 'revisit') renderRevisit();
       } else { alert(res.error || 'Failed to save rating'); }
     });
   });
