@@ -497,12 +497,11 @@ body{
 .q-card-rm:hover{color:var(--red);}
 .q-empty{text-align:center;color:var(--dim);font-size:13px;padding:28px 0;}
 /* ---- GRID TAB ---- */
-#page-grid{padding:0 0 80px;overflow-x:hidden;}
-.grid-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;}
-.grid-card{position:relative;cursor:pointer;overflow:hidden;border-radius:5px;background:var(--surface2);will-change:transform;transition:transform 0.08s ease-out;}
-.grid-card::before{content:'';display:block;padding-top:100%;}
-.grid-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;}
-.grid-card-bg{position:absolute;inset:0;}
+#page-grid{padding:0 0 80px;}
+#gridWrap{padding:2px;font-size:0;line-height:0;}
+.grid-card{display:inline-block;vertical-align:top;position:relative;overflow:hidden;border-radius:5px;cursor:pointer;will-change:transform;transition:transform 0.08s ease-out;margin:2px;}
+.grid-card img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;pointer-events:none;}
+.grid-card-bg{position:absolute;top:0;left:0;width:100%;height:100%;}
 .grid-score{position:absolute;bottom:3px;right:3px;font-size:10px;font-weight:800;padding:2px 5px;border-radius:4px;color:#000;line-height:1.4;pointer-events:none;}
 /* Lightbox */
 #gridLightbox{display:none;position:fixed;inset:0;z-index:8500;}
@@ -2422,9 +2421,12 @@ var _lbSwipeStartY = 0;
 function renderGrid() {
   var wrap = document.getElementById('gridWrap');
   if (!wrap) return;
-  // Build from ALBUMS directly for reliability
+  wrap.innerHTML = '';
+  // Compute explicit pixel cell size — no CSS tricks needed
+  var totalW = wrap.offsetWidth || (window.innerWidth - 4);
+  var cell = Math.floor((totalW - 12) / 3); // 3 cols, 2px margin each side = 12px total
+  // Build album list
   var albums = (window.ALBUMS || []).slice().sort(function(a,b){ return (+b.sc||0)-(+a.sc||0); });
-  // Also include rated queue albums not in the Journey
   var journeyKeys = {};
   albums.forEach(function(a){ journeyKeys[(a.ar||'')+'|'+(a.al||'')] = true; });
   (window.REVISIT_RATINGS||[]).forEach(function(r){
@@ -2432,12 +2434,14 @@ function renderGrid() {
       albums.push({ar:r.ar, al:r.al, sc:r.rs, im:r.im||'', yr:''});
     }
   });
-  wrap.innerHTML = '';
   albums.forEach(function(a) {
     var sc = parseInt(a.sc) || 0;
     if (!sc) return;
+    var col = scoreColor(sc);
     var card = document.createElement('div');
     card.className = 'grid-card';
+    card.style.width  = cell + 'px';
+    card.style.height = cell + 'px';
     if (a.im) {
       var img = document.createElement('img');
       img.src = a.im;
@@ -2447,13 +2451,13 @@ function renderGrid() {
     } else {
       var bg = document.createElement('div');
       bg.className = 'grid-card-bg';
-      bg.style.background = 'linear-gradient(135deg,'+scoreColor(sc)+'44,'+scoreColor(sc)+'18)';
+      bg.style.background = 'linear-gradient(135deg,' + col + '55,' + col + '18)';
       card.appendChild(bg);
     }
     var badge = document.createElement('span');
     badge.className = 'grid-score';
     badge.textContent = sc;
-    badge.style.background = scoreColor(sc);
+    badge.style.background = col;
     card.appendChild(badge);
     (function(c, ar, al, score, im, yr){
       c.addEventListener('click', function(){ openGridLightbox(c, {ar:ar, al:al, sc:score, im:im, yr:yr}); });
