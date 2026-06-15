@@ -377,7 +377,17 @@ body{
   border-top:2px solid rgba(91,155,248,0.5);
   border-radius:16px;padding:16px;margin-bottom:0;
   box-shadow:0 4px 28px rgba(0,0,0,0.5),inset 0 1px 0 rgba(91,155,248,0.1);
+  position:relative;overflow:hidden;
 }
+#qPlayerBg{
+  position:absolute;inset:-30px;
+  background-size:cover;background-position:center;
+  filter:blur(55px) saturate(2.2) brightness(0.8);
+  opacity:0;pointer-events:none;
+  transition:opacity 0.8s ease,background-image 0.4s ease;
+}
+#qPlayerBg.lit{opacity:0.28;}
+#qPlayer>*:not(#qPlayerBg){position:relative;z-index:1;}
 #qOnAirLight{width:8px;height:8px;border-radius:50%;background:#e07070;opacity:0.25;flex-shrink:0;transition:opacity 0.3s;}
 #qOnAirLight.live{opacity:1;animation:onAirBlink 1.4s ease-in-out infinite;}
 #qPlayerTop{display:flex;gap:14px;align-items:center;}
@@ -867,6 +877,7 @@ body{
   </div>
   <!-- ── VINYL PLAYER (hidden until album selected) ── -->
   <div id="qPlayer">
+    <div id="qPlayerBg"></div>
     <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">
       <div id="qOnAirLight"></div>
       <span style="font-size:10px;font-weight:700;color:rgba(91,155,248,0.45);letter-spacing:0.12em;text-transform:uppercase;">On Air</span>
@@ -924,9 +935,8 @@ body{
 
   <!-- ── DISCOVER PANEL ── -->
   <div id="qt-discover" class="q-panel">
-    <div id="dList" class="q-album-list"></div>
     <!-- ── PUBLIC SUGGESTION FORM ── -->
-    <div style="border-top:1px solid var(--border);margin-top:20px;padding-top:16px;">
+    <div style="margin-bottom:20px;">
       <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Suggest an Album</div>
       <div style="position:relative;">
         <input type="text" id="suggestSearch" placeholder="Search artist or album..." autocomplete="off" autocorrect="off" spellcheck="false" style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border-mid);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
@@ -935,6 +945,9 @@ body{
       <div id="suggestSelected" style="display:none;align-items:center;gap:10px;margin-top:8px;background:rgba(91,155,248,0.06);border:1px solid var(--border-mid);border-radius:8px;padding:8px 10px;"></div>
       <input type="url" id="suggestSpotifyUrl" placeholder="Spotify URL (optional)" autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none;">
       <button id="suggestSubmitBtn" disabled style="width:100%;margin-top:8px;background:#2D6BE4;border:none;border-radius:8px;padding:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;opacity:0.4;">Suggest Album</button>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:16px;">
+      <div id="dList" class="q-album-list"></div>
     </div>
   </div>
 
@@ -1697,6 +1710,12 @@ function selectQAlbum(a, cardEl, source, journeyScore) {
   // On Air light
   var light = document.getElementById('qOnAirLight');
   if (light) light.classList.add('live');
+  // Ambient color bloom from album art
+  var playerBg = document.getElementById('qPlayerBg');
+  if (playerBg && a.im) {
+    playerBg.style.backgroundImage = 'url(' + a.im + ')';
+    playerBg.classList.add('lit');
+  }
   // Rate area
   var rateArea = document.getElementById('qPlayerRateArea');
   if (rateArea) {
