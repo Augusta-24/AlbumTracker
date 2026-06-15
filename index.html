@@ -496,6 +496,20 @@ body{
 }
 .q-card-rm:hover{color:var(--red);}
 .q-empty{text-align:center;color:var(--dim);font-size:13px;padding:28px 0;}
+/* ---- GRID TAB ---- */
+#page-grid{padding:0 0 80px;overflow-x:hidden;}
+.grid-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;}
+.grid-card{position:relative;aspect-ratio:1/1;cursor:pointer;overflow:hidden;border-radius:5px;background:var(--surface2);will-change:transform;transition:transform 0.08s ease-out;}
+.grid-card img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;}
+.grid-score{position:absolute;bottom:3px;right:3px;font-size:10px;font-weight:800;padding:2px 5px;border-radius:4px;color:#000;line-height:1.4;pointer-events:none;}
+/* Lightbox */
+#gridLightbox{display:none;position:fixed;inset:0;z-index:8500;}
+#gridLbBackdrop{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background 0.35s ease;}
+#gridLbBackdrop.dim{background:rgba(0,0,0,0.88);}
+#gridLbInner{position:fixed;background:#111;overflow:hidden;border-radius:8px;box-shadow:0 24px 80px rgba(0,0,0,0.9);transform-origin:center center;}
+#gridLbImg{width:100%;display:block;object-fit:cover;}
+#gridLbInfo{padding:14px 16px 18px;opacity:0;transition:opacity 0.22s ease;}
+#gridLbInfo.show{opacity:1;}
 </style>
 </head>
 <body>
@@ -905,10 +919,9 @@ body{
 
   <!-- ── RANDOMIZER ── -->
   <div id="randomizerBox" style="background:repeating-radial-gradient(circle at 50% 50%,transparent 0px,transparent 17px,rgba(245,158,11,0.05) 17px,rgba(245,158,11,0.05) 18px),radial-gradient(ellipse at 50% 50%,rgba(245,158,11,0.06) 0%,transparent 65%),linear-gradient(160deg,#100c02 0%,#1a1202 60%,#0d0a02 100%);border:1px solid rgba(245,158,11,0.28);border-top:2px solid rgba(245,158,11,0.55);border-radius:16px;padding:14px 16px;margin-top:10px;margin-bottom:16px;box-shadow:0 4px 28px rgba(0,0,0,0.5),inset 0 1px 0 rgba(245,158,11,0.08);">
-    <div style="font-size:10px;font-weight:700;color:rgba(245,158,11,0.5);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Select Station</div>
     <button id="randomizerBtn" style="width:100%;background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:11px 16px;color:#fbbf24;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:0.02em;">
       <svg viewBox="0 0 28 28" fill="none" style="width:22px;height:22px;flex-shrink:0;"><circle cx="14" cy="14" r="11" stroke="#fbbf24" stroke-width="1.5" opacity="0.5"/><circle cx="14" cy="14" r="7" stroke="#fbbf24" stroke-width="1.5" opacity="0.7"/><circle cx="14" cy="14" r="3" fill="#fbbf24" opacity="0.9"/><line x1="14" y1="3" x2="14" y2="9" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><circle cx="14" cy="14" r="1.5" fill="#100c02"/></svg>
-      Surprise Me!
+      Activate the Randomizer
     </button>
   </div>
 
@@ -940,6 +953,7 @@ body{
       <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Suggest an Album</div>
       <div style="position:relative;">
         <input type="text" id="suggestSearch" placeholder="Search artist or album..." autocomplete="off" autocorrect="off" spellcheck="false" style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border-mid);border-radius:8px;padding:9px 12px;color:var(--text);font-size:16px;outline:none;">
+        <button id="suggestRandomBtn" style="width:100%;margin-top:6px;background:rgba(252,60,68,0.07);border:1px solid rgba(252,60,68,0.2);border-radius:8px;padding:9px 12px;color:#fc3c44;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-sizing:border-box;">&#127922; Random from Apple Music</button>
         <div id="suggestResults" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface2);border:1px solid var(--border-mid);border-radius:10px;z-index:50;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></div>
       </div>
       <div id="suggestSelected" style="display:none;align-items:center;gap:10px;margin-top:8px;background:rgba(91,155,248,0.06);border:1px solid var(--border-mid);border-radius:8px;padding:8px 10px;"></div>
@@ -955,6 +969,24 @@ body{
     </div>
   </div>
 
+</div>
+
+<div id="page-grid" class="page">
+  <div class="grid-wrap" id="gridWrap"></div>
+</div>
+
+<div id="gridLightbox">
+  <div id="gridLbBackdrop"></div>
+  <div id="gridLbInner">
+    <img id="gridLbImg" src="" alt="">
+    <div id="gridLbInfo">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <span id="gridLbScorePill"></span>
+      </div>
+      <div id="gridLbAlbum" style="font-size:16px;font-weight:700;color:#fff;line-height:1.3;"></div>
+      <div id="gridLbArtist" style="font-size:13px;color:var(--muted);margin-top:3px;"></div>
+    </div>
+  </div>
 </div>
 
 <nav id="tabBar">
@@ -983,6 +1015,15 @@ body{
       <line x1="9" y1="21" x2="9" y2="3"/>
     </svg>
     History
+  </button>
+  <button class="tab-btn" data-page="grid">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1"/>
+      <rect x="14" y="3" width="7" height="7" rx="1"/>
+      <rect x="3" y="14" width="7" height="7" rx="1"/>
+      <rect x="14" y="14" width="7" height="7" rx="1"/>
+    </svg>
+    Grid
   </button>
 </nav>
 <div id="loadingOverlay" style="position:fixed;inset:0;background:#0b1520;display:flex;align-items:center;justify-content:center;z-index:9999;">
@@ -1116,6 +1157,7 @@ function showPage(name) {
   window.scrollTo(0, 0);
   if (name === 'history') renderHistory();
   if (name === 'upnext') renderQueue();
+  if (name === 'grid') renderGrid();
 }
 
 tabs.forEach(function(t) {
@@ -2163,6 +2205,45 @@ if (randomizerBtn) {
     if (!searchEl.contains(e.target) && !resultsEl.contains(e.target)) resultsEl.style.display = 'none';
   });
 
+  var randomBtn = document.getElementById('suggestRandomBtn');
+  if (randomBtn) {
+    randomBtn.addEventListener('click', function() {
+      var letters = 'abcdefghijklmnopqrstuvwxyz';
+      var term = letters[Math.floor(Math.random() * letters.length)];
+      randomBtn.textContent = 'Finding something...';
+      randomBtn.disabled = true;
+      fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(term) + '&entity=album&limit=50')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          randomBtn.innerHTML = '&#127922; Random from Apple Music';
+          randomBtn.disabled = false;
+          if (!data.results || !data.results.length) return;
+          var r = data.results[Math.floor(Math.random() * data.results.length)];
+          var art = (r.artworkUrl100||'').replace('100x100bb','300x300bb');
+          var year = (r.releaseDate||'').substring(0,4);
+          picked = {artist:r.artistName||'', album:r.collectionName||'', artUrl:art, year:year, amUrl:r.collectionViewUrl||''};
+          resultsEl.style.display = 'none';
+          searchEl.value = '';
+          selectedEl.style.display = 'flex';
+          selectedEl.innerHTML =
+            '<img src="'+art+'" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">' +
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="font-size:12px;font-weight:700;color:var(--text);">' + picked.album + '</div>' +
+              '<div style="font-size:10px;color:var(--muted);">' + picked.artist + (picked.year ? ' · '+picked.year : '') + '</div>' +
+            '</div>' +
+            '<button id="suggestClear" style="background:none;border:none;color:var(--dim);font-size:20px;line-height:1;cursor:pointer;flex-shrink:0;padding:0 4px;">&times;</button>';
+          document.getElementById('suggestClear').addEventListener('click', function(){
+            picked = null; selectedEl.style.display = 'none'; setSubmitEnabled(false);
+          });
+          setSubmitEnabled(true);
+        })
+        .catch(function() {
+          randomBtn.innerHTML = '&#127922; Random from Apple Music';
+          randomBtn.disabled = false;
+        });
+    });
+  }
+
   submitEl.addEventListener('click', function() {
     if (!picked) return;
     var btn = this;
@@ -2298,6 +2379,202 @@ window.addEventListener('load', function() {
   });
 });
 
+})();
+
+// ---- GRID TAB ----
+var _gridZoomRaf = null;
+var _lbOrigin = null;
+var _lbPinchDist = 0;
+var _lbPinchScale = 1;
+var _lbPinchBase = 1;
+var _lbSwipeStartY = 0;
+
+function renderGrid() {
+  var wrap = document.getElementById('gridWrap');
+  if (!wrap) return;
+  // Always rebuild so newly rated queue albums appear immediately
+  var all = buildHistoryData().filter(function(a){
+    return (a.sc != null || a.rs != null) && a.im;
+  }).sort(function(a,b){
+    var sa = a.rs != null ? a.rs : a.sc;
+    var sb = b.rs != null ? b.rs : b.sc;
+    return (sb||0) - (sa||0);
+  });
+  wrap.innerHTML = '';
+  all.forEach(function(a) {
+    var sc = a.rs != null ? a.rs : a.sc;
+    var card = document.createElement('div');
+    card.className = 'grid-card';
+    var img = document.createElement('img');
+    img.src = a.im;
+    img.loading = 'lazy';
+    img.alt = '';
+    card.appendChild(img);
+    var badge = document.createElement('span');
+    badge.className = 'grid-score';
+    badge.textContent = sc;
+    badge.style.background = scoreColor(sc);
+    card.appendChild(badge);
+    (function(c, album, score){ c.addEventListener('click', function(){ openGridLightbox(c, Object.assign({}, album, {sc: score})); }); })(card, a, sc);
+    wrap.appendChild(card);
+  });
+  updateGridZoom();
+}
+
+function updateGridZoom() {
+  var cards = document.querySelectorAll('.grid-card');
+  if (!cards.length) return;
+  var vc = window.innerHeight / 2;
+  cards.forEach(function(card) {
+    var r = card.getBoundingClientRect();
+    var cc = r.top + r.height / 2;
+    var dist = Math.abs(cc - vc);
+    var zone = window.innerHeight * 0.5;
+    var t = Math.max(0, 1 - dist / zone);
+    card.style.transform = 'scale(' + (1 + 0.15 * t * t) + ')';
+  });
+}
+
+window.addEventListener('scroll', function() {
+  var pg = document.querySelector('.page.active');
+  if (!pg || pg.id !== 'page-grid') return;
+  if (_gridZoomRaf) return;
+  _gridZoomRaf = requestAnimationFrame(function() {
+    _gridZoomRaf = null;
+    updateGridZoom();
+  });
+}, {passive: true});
+
+function openGridLightbox(card, album) {
+  var lb    = document.getElementById('gridLightbox');
+  var bd    = document.getElementById('gridLbBackdrop');
+  var inner = document.getElementById('gridLbInner');
+  var img   = document.getElementById('gridLbImg');
+  var info  = document.getElementById('gridLbInfo');
+
+  _lbOrigin = card.getBoundingClientRect();
+  _lbPinchScale = 1;
+  inner.style.transform = '';
+  inner.style.transition = 'none';
+
+  var vw = window.innerWidth;
+  var vh = window.innerHeight;
+  var tw = Math.min(vw * 0.9, 440);
+  var infoH = 96;
+  var tx = (vw - tw) / 2;
+  var ty = Math.max(16, (vh - (tw + infoH)) / 2);
+
+  img.src = album.im || '';
+  img.style.height = tw + 'px';
+
+  var sc = album.sc || '';
+  var pill = document.getElementById('gridLbScorePill');
+  pill.textContent = sc;
+  pill.style.cssText = 'font-size:16px;font-weight:800;padding:4px 12px;border-radius:7px;color:#000;background:' + scoreColor(sc) + ';';
+  document.getElementById('gridLbAlbum').textContent = album.al || '';
+  document.getElementById('gridLbArtist').textContent = (album.ar || '') + (album.yr ? ' · ' + album.yr : '');
+  info.classList.remove('show');
+
+  inner.style.left   = _lbOrigin.left   + 'px';
+  inner.style.top    = _lbOrigin.top    + 'px';
+  inner.style.width  = _lbOrigin.width  + 'px';
+  inner.style.height = _lbOrigin.height + 'px';
+  inner.style.borderRadius = '5px';
+
+  lb.style.display = 'block';
+  bd.classList.remove('dim');
+
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      var sp = 'cubic-bezier(0.34,1.1,0.64,1)';
+      inner.style.transition = 'left 0.4s '+sp+',top 0.4s '+sp+',width 0.38s '+sp+',height 0.38s '+sp+',border-radius 0.3s ease';
+      inner.style.left   = tx + 'px';
+      inner.style.top    = ty + 'px';
+      inner.style.width  = tw + 'px';
+      inner.style.height = (tw + infoH) + 'px';
+      inner.style.borderRadius = '16px';
+      bd.classList.add('dim');
+      setTimeout(function() { info.classList.add('show'); }, 260);
+    });
+  });
+}
+
+function closeGridLightbox() {
+  var lb    = document.getElementById('gridLightbox');
+  var bd    = document.getElementById('gridLbBackdrop');
+  var inner = document.getElementById('gridLbInner');
+  var info  = document.getElementById('gridLbInfo');
+  if (!_lbOrigin) { lb.style.display = 'none'; return; }
+  info.classList.remove('show');
+  inner.style.transform = '';
+  _lbPinchScale = 1;
+  var sp = 'cubic-bezier(0.4,0,0.6,1)';
+  inner.style.transition = 'left 0.3s '+sp+',top 0.3s '+sp+',width 0.3s '+sp+',height 0.3s '+sp+',border-radius 0.25s ease,transform 0.3s ease';
+  inner.style.left   = _lbOrigin.left   + 'px';
+  inner.style.top    = _lbOrigin.top    + 'px';
+  inner.style.width  = _lbOrigin.width  + 'px';
+  inner.style.height = _lbOrigin.height + 'px';
+  inner.style.borderRadius = '5px';
+  bd.classList.remove('dim');
+  setTimeout(function() { lb.style.display = 'none'; }, 310);
+}
+
+document.getElementById('gridLbBackdrop').addEventListener('click', closeGridLightbox);
+
+(function() {
+  var inner = document.getElementById('gridLbInner');
+  var bd    = document.getElementById('gridLbBackdrop');
+
+  inner.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 2) {
+      _lbPinchDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      _lbPinchBase = _lbPinchScale;
+      e.preventDefault();
+    } else if (e.touches.length === 1) {
+      _lbSwipeStartY = e.touches[0].clientY;
+    }
+  }, {passive: false});
+
+  inner.addEventListener('touchmove', function(e) {
+    if (e.touches.length === 2) {
+      var d = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      _lbPinchScale = Math.max(0.85, Math.min(3, _lbPinchBase * (d / _lbPinchDist)));
+      inner.style.transition = 'none';
+      inner.style.transform = 'scale(' + _lbPinchScale + ')';
+      e.preventDefault();
+    } else if (e.touches.length === 1) {
+      var dy = e.touches[0].clientY - _lbSwipeStartY;
+      if (dy > 0) {
+        inner.style.transition = 'none';
+        inner.style.transform = 'translateY(' + dy + 'px) scale(' + Math.max(0.85, 1 - dy / 500) + ')';
+        bd.style.opacity = String(Math.max(0, 1 - dy / 180));
+        e.preventDefault();
+      }
+    }
+  }, {passive: false});
+
+  inner.addEventListener('touchend', function(e) {
+    var dy = (e.changedTouches[0] ? e.changedTouches[0].clientY : _lbSwipeStartY) - _lbSwipeStartY;
+    if (e.touches.length === 0) {
+      if (dy > 90) {
+        closeGridLightbox();
+        return;
+      }
+      _lbPinchScale = Math.max(1, _lbPinchScale);
+      inner.style.transition = 'transform 0.3s cubic-bezier(0.34,1.1,0.64,1)';
+      inner.style.transform = _lbPinchScale > 1 ? 'scale(' + _lbPinchScale + ')' : '';
+      bd.style.opacity = '';
+      setTimeout(function() {
+        if (_lbPinchScale <= 1) inner.style.transition = '';
+      }, 300);
+    }
+  });
 })();
 </script>
 </body>
