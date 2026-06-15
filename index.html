@@ -498,11 +498,8 @@ body{
 .q-empty{text-align:center;color:var(--dim);font-size:13px;padding:28px 0;}
 /* ---- GRID TAB ---- */
 #page-grid{padding:0 0 80px;}
-#gridWrap{padding:2px;font-size:0;line-height:0;}
-.grid-card{display:inline-block;vertical-align:top;position:relative;overflow:hidden;border-radius:5px;cursor:pointer;will-change:transform;transition:transform 0.08s ease-out;margin:2px;}
-.grid-card img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;pointer-events:none;}
-.grid-card-bg{position:absolute;top:0;left:0;width:100%;height:100%;}
-.grid-score{position:absolute;bottom:3px;right:3px;font-size:10px;font-weight:800;padding:2px 5px;border-radius:4px;color:#000;line-height:1.4;pointer-events:none;}
+.grid-card{aspect-ratio:1;transition:transform 0.15s ease;}
+.grid-card:hover{transform:scale(1.5);z-index:10;}
 /* Lightbox */
 #gridLightbox{display:none;position:fixed;inset:0;z-index:8500;}
 #gridLbBackdrop{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background 0.35s ease;}
@@ -986,7 +983,8 @@ body{
 </div>
 
 <div id="page-grid" class="page">
-  <div class="grid-wrap" id="gridWrap"></div>
+  <div id="gridStatus" style="display:none;padding:16px;font-size:12px;color:var(--muted);text-align:center;"></div>
+  <div id="gridWrap" style="display:grid;grid-template-columns:repeat(10,1fr);gap:0;"></div>
 </div>
 
 <div id="gridLightbox">
@@ -1573,6 +1571,7 @@ function scoreColor(sc) {
   if (sc >= 50) return '#fb923c';
   return '#E07070';
 }
+window.scoreColor = scoreColor;
 
 function parseDate(str) {
   if (!str) return 0;
@@ -2411,7 +2410,6 @@ window.addEventListener('load', function() {
 })();
 
 // ---- GRID TAB ----
-var _gridZoomRaf = null;
 var _lbOrigin = null;
 var _lbPinchDist = 0;
 var _lbPinchScale = 1;
@@ -2419,77 +2417,64 @@ var _lbPinchBase = 1;
 var _lbSwipeStartY = 0;
 
 function renderGrid() {
+  var status = document.getElementById('gridStatus');
   var wrap = document.getElementById('gridWrap');
   if (!wrap) return;
-  wrap.innerHTML = '';
-  // Compute explicit pixel cell size — no CSS tricks needed
-  var totalW = wrap.offsetWidth || (window.innerWidth - 4);
-  var cell = Math.floor((totalW - 12) / 3); // 3 cols, 2px margin each side = 12px total
-  // Build album list
-  var albums = (window.ALBUMS || []).slice().sort(function(a,b){ return (+b.sc||0)-(+a.sc||0); });
-  var journeyKeys = {};
-  albums.forEach(function(a){ journeyKeys[(a.ar||'')+'|'+(a.al||'')] = true; });
-  (window.REVISIT_RATINGS||[]).forEach(function(r){
-    if (!journeyKeys[(r.ar||'')+'|'+(r.al||'')]) {
-      albums.push({ar:r.ar, al:r.al, sc:r.rs, im:r.im||'', yr:''});
+  if (status) { status.textContent = 'Loading...'; status.style.display = 'block'; }
+  setTimeout(function() {
+    try {
+      wrap.innerHTML = '';
+      // Build combined album list: Journey (by day order) + Discover Queue + Revisit extras
+      var seen = {};
+      var list = [];
+      (window.ALBUMS || []).slice().sort(function(a,b){ return (+a.d||0)-(+b.d||0); }).forEach(function(a){
+        var key = (a.ar||'')+'|'+(a.al||'');
+        seen[key] = true;
+        list.push({ar:a.ar, al:a.al, sc:parseInt(a.sc)||0, im:a.im||'', yr:a.yr||''});
+      });
+      (window.DISCOVER_QUEUE||[]).forEach(function(a){
+        var key = (a.ar||'')+'|'+(a.al||'');
+        if (seen[key]) return;
+        seen[key] = true;
+        list.push({ar:a.ar, al:a.al, sc:0, im:a.im||'', yr:a.yr||''});
+      });
+      (window.REVISIT_RATINGS||[]).forEach(function(r){
+        var key = (r.ar||'')+'|'+(r.al||'');
+        if (seen[key]) return;
+        seen[key] = true;
+        list.push({ar:r.ar, al:r.al, sc:parseInt(r.rs)||0, im:r.im||'', yr:''});
+      });
+      var count = 0;
+      list.forEach(function(a) {
+        count++;
+        var sc = a.sc;
+        var col = sc ? window.scoreColor(sc) : '#334';
+        var card = document.createElement('div');
+        card.className = 'grid-card';
+        card.style.cssText = 'position:relative;overflow:hidden;cursor:pointer;background:'+col+'44;';
+        if (a.im) {
+          var img = document.createElement('img');
+          img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;';
+          img.src = a.im;
+          img.loading = 'lazy';
+          img.alt = '';
+          card.appendChild(img);
+        }
+        (function(c, ar, al, score, im, yr){
+          c.addEventListener('click', function(){ openGridLightbox(c, {ar:ar, al:al, sc:score, im:im, yr:yr}); });
+        })(card, a.ar||'', a.al||'', sc, a.im||'', a.yr||'');
+        wrap.appendChild(card);
+      });
+      if (status) {
+        if (count > 0) { status.style.display = 'none'; }
+        else { status.textContent = 'No albums yet.'; }
+      }
+    } catch(e) {
+      if (status) { status.textContent = 'Error: ' + (e && e.message ? e.message : String(e)); status.style.display = 'block'; }
     }
-  });
-  albums.forEach(function(a) {
-    var sc = parseInt(a.sc) || 0;
-    if (!sc) return;
-    var col = scoreColor(sc);
-    var card = document.createElement('div');
-    card.className = 'grid-card';
-    card.style.width  = cell + 'px';
-    card.style.height = cell + 'px';
-    if (a.im) {
-      var img = document.createElement('img');
-      img.src = a.im;
-      img.loading = 'lazy';
-      img.alt = '';
-      card.appendChild(img);
-    } else {
-      var bg = document.createElement('div');
-      bg.className = 'grid-card-bg';
-      bg.style.background = 'linear-gradient(135deg,' + col + '55,' + col + '18)';
-      card.appendChild(bg);
-    }
-    var badge = document.createElement('span');
-    badge.className = 'grid-score';
-    badge.textContent = sc;
-    badge.style.background = col;
-    card.appendChild(badge);
-    (function(c, ar, al, score, im, yr){
-      c.addEventListener('click', function(){ openGridLightbox(c, {ar:ar, al:al, sc:score, im:im, yr:yr}); });
-    })(card, a.ar||'', a.al||'', sc, a.im||'', a.yr||'');
-    wrap.appendChild(card);
-  });
-  updateGridZoom();
+  }, 50);
 }
 
-function updateGridZoom() {
-  var cards = document.querySelectorAll('.grid-card');
-  if (!cards.length) return;
-  var vc = window.innerHeight / 2;
-  cards.forEach(function(card) {
-    var r = card.getBoundingClientRect();
-    var cc = r.top + r.height / 2;
-    var dist = Math.abs(cc - vc);
-    var zone = window.innerHeight * 0.5;
-    var t = Math.max(0, 1 - dist / zone);
-    card.style.transform = 'scale(' + (1 + 0.15 * t * t) + ')';
-  });
-}
-
-window.addEventListener('scroll', function() {
-  var pg = document.querySelector('.page.active');
-  if (!pg || pg.id !== 'page-grid') return;
-  if (_gridZoomRaf) return;
-  _gridZoomRaf = requestAnimationFrame(function() {
-    _gridZoomRaf = null;
-    updateGridZoom();
-  });
-}, {passive: true});
 
 function openGridLightbox(card, album) {
   var lb    = document.getElementById('gridLightbox');
