@@ -272,6 +272,10 @@ function getListens() {
 
 function logListen(data) {
   if (!checkPin(data.pin)) return {error: 'Unauthorized'};
+  var score = Number(data.score);
+  if (!isFinite(score) || score < 1 || score > 100 || Math.floor(score) !== score) {
+    return {error: 'A whole-number score from 1 to 100 is required'};
+  }
   var sh = getListensSheet_();
   var ts = data.ts || new Date().toISOString();
   // Duplicate guard: same album within the same listen event
@@ -289,7 +293,7 @@ function logListen(data) {
     data.artUrl || '',
     data.year || '',
     data.reaction || '',
-    (data.score === 0 || data.score) ? data.score : '',
+    score,
     data.favTrack || '',
     data.note || '',
     data.source || '',
@@ -304,13 +308,17 @@ function logListen(data) {
 // Enrich a just-logged listen (score, favorite track, note, revisit flag, reaction)
 function updateListen(data) {
   if (!checkPin(data.pin)) return {error: 'Unauthorized'};
+  var score = Number(data.score);
+  if (!isFinite(score) || score < 1 || score > 100 || Math.floor(score) !== score) {
+    return {error: 'A whole-number score from 1 to 100 is required'};
+  }
   var sh = getListensSheet_();
   var rows = sh.getDataRange().getValues();
   var COL = {reaction: 7, score: 8, favTrack: 9, note: 10, revisitFlag: 14};
   for (var i = rows.length - 1; i >= 1; i--) {
     if (String(rows[i][0]) === String(data.ts) && String(rows[i][1]) === String(data.albumId || '')) {
       if ('reaction'    in data) sh.getRange(i + 1, COL.reaction).setValue(data.reaction || '');
-      if ('score'       in data) sh.getRange(i + 1, COL.score).setValue((data.score === 0 || data.score) ? data.score : '');
+      sh.getRange(i + 1, COL.score).setValue(score);
       if ('favTrack'    in data) sh.getRange(i + 1, COL.favTrack).setValue(data.favTrack || '');
       if ('note'        in data) sh.getRange(i + 1, COL.note).setValue(data.note || '');
       if ('revisitFlag' in data) sh.getRange(i + 1, COL.revisitFlag).setValue(data.revisitFlag ? 1 : '');
@@ -349,27 +357,11 @@ function addSuggestion(data) {
 }
 
 function addRating(data) {
-  if (!checkPin(data.pin)) return {error: 'Unauthorized'};
-  var sh = getSheet('RevisitRatings');
-  // Update if row already exists for this album
-  var rows = sh.getDataRange().getValues();
-  for (var i = 1; i < rows.length; i++) {
-    if (String(rows[i][0]) === String(data.albumId)) {
-      sh.getRange(i + 1, 5).setValue(data.score);
-      sh.getRange(i + 1, 6).setValue(new Date().toLocaleDateString('en-US'));
-      return {ok: true, updated: true};
-    }
-  }
-  sh.appendRow([
-    data.albumId      || '',
-    data.artist       || '',
-    data.album        || '',
-    data.journeyScore || '',
-    data.score        || '',
-    new Date().toLocaleDateString('en-US')
-  ]);
-  if (data.source === 'discover') markDiscoverRated(data.albumId, data.artist, data.album);
-  return {ok: true};
+  // Backward-compatible endpoint: legacy clients now append to the same
+  // immutable listen history instead of overwriting RevisitRatings.
+  data.source = data.source || 'manual';
+  if (data.prevScore == null || data.prevScore === '') data.prevScore = data.journeyScore;
+  return logListen(data);
 }
 
 function addToDiscover(data) {

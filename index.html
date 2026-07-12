@@ -294,6 +294,7 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
 .score-slider-row{display:flex;align-items:center;gap:13px;}
 .score-slider-row input[type=range]{flex:1;accent-color:var(--sky);height:28px;}
 .score-out{font-size:22px;font-weight:800;min-width:44px;text-align:center;border-radius:9px;padding:3px 0;color:#000;background:var(--dim);}
+.score-step{width:44px;height:44px;border-radius:12px;border:1px solid var(--border-mid);background:var(--surface);color:var(--pale);font-size:22px;font-weight:800;cursor:pointer;flex-shrink:0;}
 .track-list{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;}
 .track-opt{
   display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);
@@ -384,6 +385,7 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
 .diary-al{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .diary-ar{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
 .diary-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center;}
+.diary-tags .score-pill{font-size:14px;padding:3px 10px;min-width:46px;}
 .rx-tag{font-size:9px;font-weight:700;border-radius:9px;padding:2px 8px;letter-spacing:0.03em;}
 .src-tag{font-size:9px;color:var(--dim);}
 .diary-note{font-size:11px;color:var(--muted);font-style:italic;margin-top:6px;line-height:1.45;}
@@ -1060,7 +1062,7 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
       </div>
       <div class="qv-embed" id="qvEmbed"></div>
       <div class="qv-log" id="qvLog" style="display:none;">
-        <div class="qv-log-label" id="qvLogLabel">Just listened? How did it land?</div>
+        <div class="qv-log-label" id="qvLogLabel">Just listened? Rate this listen.</div>
         <div class="chips" id="qvLogChips"></div>
       </div>
     </div>
@@ -1080,15 +1082,16 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
       </div>
     </div>
     <div class="rd-block">
-      <div class="rd-label">Reaction</div>
+      <div class="rd-label">Reaction <span style="opacity:0.6;text-transform:none;letter-spacing:0;">(optional)</span></div>
       <div class="chips" id="rdChips" style="padding:0;"></div>
     </div>
     <div class="rd-block">
-      <div class="rd-label">Score <span style="opacity:0.6;text-transform:none;letter-spacing:0;">(optional)</span></div>
+      <div class="rd-label">Score <span style="opacity:0.6;text-transform:none;letter-spacing:0;">(required · 1–100)</span></div>
       <div class="score-slider-row">
+        <button class="score-step" id="rdMinus" type="button" aria-label="Decrease score">&minus;</button>
         <input type="range" id="rdSlider" min="1" max="100" value="75">
         <div class="score-out" id="rdScoreOut">&ndash;</div>
-        <button class="mini-link" id="rdScoreClear" style="display:none;">clear</button>
+        <button class="score-step" id="rdPlus" type="button" aria-label="Increase score">+</button>
       </div>
       <div id="rdCompare" style="font-size:11px;color:var(--muted);margin-top:7px;display:none;"></div>
     </div>
@@ -1106,7 +1109,7 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
         <input type="checkbox" id="rdRevisit" style="width:20px;height:20px;accent-color:var(--sky);">
       </div>
     </div>
-    <button class="rd-save" id="rdSave">Save details</button>
+    <button class="rd-save" id="rdSave">Save 75</button>
   </div>
 </div>
 
@@ -1495,6 +1498,12 @@ function buildCatalog() {
 
 // Effective "previous score" for comparisons: latest known score
 function prevScoreOf(rec) { return rec.latestScore != null ? rec.latestScore : rec.jsc; }
+function prevScoreBefore(rec, date) {
+  var prior = rec.events.filter(function(e) {
+    return e.date < date && e.sc != null && !isNaN(e.sc);
+  });
+  return prior.length ? prior[prior.length - 1].sc : null;
+}
 
 // ════════════════════════════════════════════════════════════
 // OWNER MODE
@@ -1904,7 +1913,7 @@ function renderPrompts() {
     var name = rec ? rec.al : det.name;
     var artist = rec ? rec.ar : det.artist;
     var img = (rec && rec.im) || det.img;
-    var prev = rec ? prevScoreOf(rec) : null;
+    var prev = rec ? prevScoreBefore(rec, det.lastAt) : null;
     var q = det.conf === 'high'
       ? 'You listened to <strong>' + esc(name) + '</strong>. How did it land?'
       : 'Were you listening to <strong>' + esc(name) + '</strong>?';
@@ -1923,17 +1932,11 @@ function renderPrompts() {
       '<div class="chips"></div>';
 
     var chipsEl = card.querySelector('.chips');
-    var chipSet = prev != null ? REVISIT_CHIPS : FIRST_CHIPS;
-    chipSet.forEach(function(rx) {
-      var b = document.createElement('button');
-      b.className = 'chip';
-      b.setAttribute('data-rx', rx);
-      b.textContent = RX[rx].label;
-      b.addEventListener('click', function() {
-        reactToPrompt(p, rx, card);
-      });
-      chipsEl.appendChild(b);
-    });
+    var rate = document.createElement('button');
+    rate.className = 'chip';
+    rate.textContent = prev != null ? 'Rate this listen · starts at ' + prev : 'Rate this listen';
+    rate.addEventListener('click', function() { reactToPrompt(p, '', card); });
+    chipsEl.appendChild(rate);
     if (det.conf !== 'high') {
       var no = document.createElement('button');
       no.className = 'chip';
@@ -1957,9 +1960,10 @@ function dismissPrompt(p, card) {
 
 function reactToPrompt(p, rx, card) {
   var det = p.det, rec = p.rec;
-  var prev = rec ? prevScoreOf(rec) : null;
-  logListen({
-    rec: rec,
+  var prev = rec ? prevScoreBefore(rec, det.lastAt) : null;
+  openReactionSheet({
+    isNew: true, rec: rec,
+    ts: det.lastAt.toISOString(),
     albumId: det.albumId,
     artist: rec ? rec.ar : det.artist,
     album: rec ? rec.al : det.name,
@@ -1968,35 +1972,23 @@ function reactToPrompt(p, rx, card) {
     reaction: rx,
     prevScore: prev,
     source: 'spotify',
-    confidence: det.conf
-  }, function(ok, ts) {
-    if (!ok) return;
-    markHandled(p.pk);
-    // advance the recently-played cursor once a detection is acted on
-    var next = lsGet('sp_after_next', 0);
-    if (next) lsSet('sp_after', next);
-    showPromptDone(card, p, rx, ts);
+    confidence: det.conf,
+    onSaved: function(ts) {
+      markHandled(p.pk);
+      // advance the recently-played cursor once a scored detection is saved
+      var next = lsGet('sp_after_next', 0);
+      if (next) lsSet('sp_after', next);
+      showPromptDone(card, p, rx, ts);
+    }
   });
 }
 
 function showPromptDone(card, p, rx, ts) {
-  var rec = p.rec;
   card.innerHTML =
     '<div class="prompt-done">' +
-      '<span style="color:' + RX[rx].color + ';font-weight:800;">&#10003; ' + RX[rx].label + '</span>' +
+      '<span style="color:var(--green);font-weight:800;">&#10003; Scored</span>' +
       '<span style="color:var(--muted);font-size:11px;">logged to your diary</span>' +
-      '<button class="mini-link">Add details</button>' +
     '</div>';
-  card.querySelector('.mini-link').addEventListener('click', function() {
-    openReactionSheet({
-      ts: ts, albumId: p.det.albumId,
-      album: rec ? rec.al : p.det.name,
-      artist: rec ? rec.ar : p.det.artist,
-      img: (rec && rec.im) || p.det.img,
-      reaction: rx,
-      prevScore: rec ? prevScoreOf(rec) : null
-    });
-  });
   setTimeout(function() {
     card.style.transition = 'opacity 0.4s ease';
     card.style.opacity = '0';
@@ -2009,14 +2001,19 @@ function showPromptDone(card, p, rx, ts) {
 // ════════════════════════════════════════════════════════════
 window.logListen = function(args, cb) {
   withOwner(function(pin) {
-    var ts = new Date().toISOString();
+    var score = Number(args.score);
+    if (!isFinite(score) || score < 1 || score > 100 || Math.floor(score) !== score) {
+      toast('Choose a score from 1 to 100'); if (cb) cb(false); return;
+    }
+    var ts = args.ts || new Date().toISOString();
     apiPost({
       action: 'logListen', pin: pin, ts: ts,
       albumId: args.albumId || '',
       artist: args.artist, album: args.album,
       artUrl: args.artUrl || '', year: args.year || '',
       reaction: args.reaction || '',
-      score: args.score != null ? args.score : '',
+      score: score,
+      favTrack: args.favTrack || '', note: args.note || '', revisitFlag: args.revisitFlag ? 1 : '',
       prevScore: args.prevScore != null ? args.prevScore : '',
       source: args.source || '', confidence: args.confidence || ''
     }, function(res) {
@@ -2024,11 +2021,15 @@ window.logListen = function(args, cb) {
       // optimistic local mirror
       var rec = args.rec || getOrCreateRec(args.albumId || '', args.artist, args.album);
       if (!rec.im && args.artUrl) rec.im = args.artUrl;
-      rec.events.push({date: new Date(), type: 'listen', ts: ts, rx: args.reaction || '', sc: args.score != null ? args.score : null, prevSc: args.prevScore, src: args.source || '', conf: args.confidence || '', fav: '', note: ''});
-      rec.lastListen = new Date();
-      if (args.score != null) rec.latestScore = args.score;
+      var eventDate = parseAnyDate(ts) || new Date();
+      var alreadyLocal = rec.events.some(function(e) { return e.type === 'listen' && e.ts === ts; });
+      if (!alreadyLocal) rec.events.push({date: eventDate, type: 'listen', ts: ts, rx: args.reaction || '', sc: score, prevSc: args.prevScore, src: args.source || '', conf: args.confidence || '', fav: args.favTrack || '', note: args.note || '', revisitFlag: !!args.revisitFlag});
+      rec.events.sort(function(a, b) { return a.date - b.date; });
+      rec.lastListen = rec.events.length ? rec.events[rec.events.length - 1].date : eventDate;
+      var scoredEvents = rec.events.filter(function(e) { return e.sc != null && !isNaN(e.sc); });
+      rec.latestScore = scoredEvents.length ? scoredEvents[scoredEvents.length - 1].sc : null;
       rec.lastRx = args.reaction || rec.lastRx;
-      DB.listens.push({ts: ts, id: args.albumId || '', ar: args.artist, al: args.album, im: args.artUrl || '', yr: args.year || '', rx: args.reaction || '', sc: args.score != null ? args.score : null, ps: args.prevScore, ft: '', nt: '', so: args.source || '', cf: args.confidence || '', rv: 0});
+      if (!DB.listens.some(function(l) { return l.ts === ts && l.id === (args.albumId || ''); })) DB.listens.push({ts: ts, id: args.albumId || '', ar: args.artist, al: args.album, im: args.artUrl || '', yr: args.year || '', rx: args.reaction || '', sc: score, ps: args.prevScore, ft: args.favTrack || '', nt: args.note || '', so: args.source || '', cf: args.confidence || '', rv: args.revisitFlag ? 1 : 0});
       renderShelves();
       if (cb) cb(true, ts);
     });
@@ -2039,11 +2040,9 @@ window.logListen = function(args, cb) {
 // REACTION DETAIL SHEET (optional enrichment)
 // ════════════════════════════════════════════════════════════
 var rdCtx = null;
-var rdScoreTouched = false;
 
 window.openReactionSheet = function(ctx) {
   rdCtx = ctx;
-  rdScoreTouched = false;
   document.getElementById('rdArt').src = ctx.img || '';
   document.getElementById('rdTitle').textContent = ctx.album;
   document.getElementById('rdSub').textContent = ctx.artist;
@@ -2069,13 +2068,11 @@ window.openReactionSheet = function(ctx) {
   var slider = document.getElementById('rdSlider');
   var out = document.getElementById('rdScoreOut');
   slider.value = ctx.prevScore != null ? ctx.prevScore : 75;
-  out.textContent = '–';
-  out.style.background = 'var(--dim)';
-  document.getElementById('rdScoreClear').style.display = 'none';
+  updateRatingControl();
   var cmp = document.getElementById('rdCompare');
   if (ctx.prevScore != null) {
     cmp.style.display = 'block';
-    cmp.innerHTML = 'Previous score: <strong style="color:' + scoreColor(ctx.prevScore) + '">' + ctx.prevScore + '</strong> — a new score is optional; your history is kept either way.';
+    cmp.innerHTML = 'Most recent score: <strong style="color:' + scoreColor(ctx.prevScore) + '">' + ctx.prevScore + '</strong> — this listen will be saved separately.';
   } else cmp.style.display = 'none';
 
   document.getElementById('rdNote').value = '';
@@ -2117,28 +2114,51 @@ window.openReactionSheet = function(ctx) {
 };
 
 document.getElementById('rdSlider').addEventListener('input', function() {
-  rdScoreTouched = true;
-  var v = parseInt(this.value);
+  updateRatingControl();
+});
+function updateRatingControl() {
+  var v = parseInt(document.getElementById('rdSlider').value);
   var out = document.getElementById('rdScoreOut');
   out.textContent = v;
   out.style.background = scoreColor(v);
-  document.getElementById('rdScoreClear').style.display = 'inline';
-});
-document.getElementById('rdScoreClear').addEventListener('click', function() {
-  rdScoreTouched = false;
-  var out = document.getElementById('rdScoreOut');
-  out.textContent = '–';
-  out.style.background = 'var(--dim)';
-  this.style.display = 'none';
-});
+  document.getElementById('rdSave').textContent = 'Save ' + v;
+}
+function stepRating(delta) {
+  var slider = document.getElementById('rdSlider');
+  slider.value = Math.max(1, Math.min(100, parseInt(slider.value) + delta));
+  updateRatingControl();
+}
+document.getElementById('rdMinus').addEventListener('click', function() { stepRating(-1); });
+document.getElementById('rdPlus').addEventListener('click', function() { stepRating(1); });
 
 window.closeReactionSheet = function() { document.getElementById('rdWrap').classList.remove('open'); };
 
 document.getElementById('rdSave').addEventListener('click', function() {
   if (!rdCtx) return;
-  var score = rdScoreTouched ? parseInt(document.getElementById('rdSlider').value) : null;
+  var score = parseInt(document.getElementById('rdSlider').value);
+  if (!isFinite(score) || score < 1 || score > 100) { toast('Choose a score from 1 to 100'); return; }
   var note = document.getElementById('rdNote').value.trim();
   var revisit = document.getElementById('rdRevisit').checked;
+  var saveBtn = document.getElementById('rdSave');
+  saveBtn.disabled = true;
+  if (rdCtx.isNew) {
+    var newCtx = rdCtx;
+    logListen({
+      ts: newCtx.ts, rec: newCtx.rec, albumId: newCtx.albumId || '',
+      artist: newCtx.artist, album: newCtx.album, artUrl: newCtx.artUrl || newCtx.img || '', year: newCtx.year || '',
+      reaction: newCtx.reaction || '', score: score, prevScore: newCtx.prevScore,
+      source: newCtx.source || 'manual', confidence: newCtx.confidence || 'manual',
+      favTrack: newCtx.favTrack || '', note: note, revisitFlag: revisit
+    }, function(ok, ts) {
+      saveBtn.disabled = false;
+      if (!ok) return;
+      closeReactionSheet();
+      toast('Saved ' + score + ' to the Diary');
+      if (newCtx.onSaved) newCtx.onSaved(ts);
+      renderDiary();
+    });
+    return;
+  }
   withOwner(function(pin) {
     apiPost({
       action: 'updateListen', pin: pin,
@@ -2148,6 +2168,7 @@ document.getElementById('rdSave').addEventListener('click', function() {
       favTrack: rdCtx.favTrack || '',
       note: note, revisitFlag: revisit ? 1 : ''
     }, function(res) {
+      saveBtn.disabled = false;
       if (res.error) { toast('Could not save details: ' + res.error); return; }
       // local mirror
       var rec = getOrCreateRec(rdCtx.albumId || '', rdCtx.artist, rdCtx.album);
@@ -2306,15 +2327,15 @@ function buildShelves() {
     }
   });
 
-  // Never listened (on record)
+  // Throwbacks: heard before Album Journey, but never rated or logged here
   var never = CAT.filter(function(r) {
     return r.srcs.indexOf('past') !== -1 && r.events.length === 0;
   });
   shelves.push({
-    id: 'never', title: 'Never listened',
-    why: 'In your collection from before the Journey — no listen on record.',
+    id: 'never', title: 'Throwbacks',
+    why: 'Albums you heard before Album Journey but never rated here.',
     items: never,
-    reason: function() { return 'From your pre-Journey collection, never logged'; }
+    reason: function() { return 'A pre-Journey listen without an Album Journey rating'; }
   });
 
   // Suggested by others
@@ -2595,29 +2616,23 @@ function openQuickView(rec, opts) {
     log.style.display = 'block';
     var prev = prevScoreOf(rec);
     document.getElementById('qvLogLabel').textContent = prev != null
-      ? 'Just relistened? (previously ' + prev + ')'
-      : 'Just listened? How did it land?';
+      ? 'Just relistened? Last score: ' + prev
+      : 'Just listened? Rate this listen.';
     var chips = document.getElementById('qvLogChips');
     chips.innerHTML = '';
-    (prev != null ? REVISIT_CHIPS : FIRST_CHIPS).forEach(function(rx) {
-      var b = document.createElement('button');
-      b.className = 'chip';
-      b.setAttribute('data-rx', rx);
-      b.textContent = RX[rx].label;
-      b.addEventListener('click', function() {
-        logListen({
-          rec: rec, albumId: rec.id, artist: rec.ar, album: rec.al,
-          artUrl: rec.im, year: rec.yr, reaction: rx, prevScore: prev,
-          source: qvSource || 'manual', confidence: 'manual'
-        }, function(ok, ts) {
-          if (!ok) return;
-          toast(RX[rx].label + ' — logged');
-          closeQuickView();
-          openReactionSheetMaybe(rec, rx, ts, prev);
-        });
+    var rate = document.createElement('button');
+    rate.className = 'rd-save';
+    rate.type = 'button';
+    rate.textContent = prev != null ? 'Rate this listen · starts at ' + prev : 'Rate this listen';
+    rate.addEventListener('click', function() {
+      closeQuickView();
+      openReactionSheet({
+        isNew: true, rec: rec, albumId: rec.id, artist: rec.ar, album: rec.al,
+        img: rec.im, artUrl: rec.im, year: rec.yr, prevScore: prev,
+        source: qvSource || 'manual', confidence: 'manual'
       });
-      chips.appendChild(b);
     });
+    chips.appendChild(rate);
   } else log.style.display = 'none';
 
   document.getElementById('qvWrap').classList.add('open');
@@ -2784,7 +2799,8 @@ function crateShow() {
   document.getElementById('crateAr').textContent = a.ar + (a.yr ? ' · ' + a.yr : '');
   var bits = [];
   if (a.jsc != null) bits.push('Journey score ' + a.jsc);
-  else if (a.events.length === 0) bits.push('Never listened on record');
+  else if (a.events.length === 0 && a.srcs.indexOf('past') !== -1) bits.push('Throwback · heard before Album Journey');
+  else if (a.events.length === 0) bits.push('No listen on record');
   if (a.rt) bits.push(Math.round(a.rt) + ' min');
   document.getElementById('crateWhy').textContent = bits.join(' · ');
   // preload a few ahead
@@ -2885,7 +2901,7 @@ function sourceLabel(e, rec) {
   var srcNames = {
     spotify: 'noticed via Spotify', manual: 'logged by hand', randomizer: 'the randomizer chose it',
     crate: 'found in the crate', forgotten: 'from Forgotten favorites', another: 'from Worth another listen',
-    never: 'from Never listened', suggested: 'a friend suggested it', recentAdd: 'from the discover pile',
+    never: 'from Throwbacks', suggested: 'a friend suggested it', recentAdd: 'from the discover pile',
     short: 'a short listen', reconsider: 'a re-hearing', decade: 'from the era shelf',
     outside: 'off the beaten path', saved: 'from Saved for later', similar: 'via Similar'
   };
