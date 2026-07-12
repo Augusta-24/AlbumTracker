@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Album Journey">
 <title>Album Journey</title>
+<link rel="apple-touch-icon" sizes="1024x1024" href="assets/album-journey-icon.png">
+<link rel="icon" type="image/png" href="assets/album-journey-icon.png">
 <!-- BUILD: 2026-07-12-v4 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
@@ -430,14 +435,18 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
 .q-empty{text-align:center;color:var(--dim);font-size:13px;padding:28px 0;}
 
 /* ══════════ LIBRARY (table + grid, ported) ══════════ */
-.search-row{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+.search-row{display:flex;align-items:center;margin:10px 0 12px;}
 #searchInput{
   flex:1;background:var(--surface2);border:1px solid var(--border-mid);color:var(--text);
   border-radius:10px;padding:10px 14px;font-size:16px;outline:none;font-family:inherit;
 }
 #searchInput::placeholder{color:var(--dim);}
 #searchInput:focus{border-color:var(--sky);}
-#albumCount{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;}
+.library-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0 4px;}
+.library-select{min-width:0;}
+.library-select label{display:block;font-size:9px;font-weight:800;color:var(--dim);letter-spacing:0.08em;text-transform:uppercase;margin:0 0 4px 2px;}
+.library-select select{width:100%;min-width:0;background:var(--surface2);border:1px solid var(--border-mid);border-radius:10px;color:var(--pale);padding:9px 25px 9px 9px;font:600 11px/1 system-ui,-apple-system,sans-serif;outline:none;}
+.library-select select:focus{border-color:var(--sky);}
 .table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);background:rgba(11,21,32,0.72);}
 #albumTable{width:100%;border-collapse:collapse;font-size:12px;}
 #albumTable th{
@@ -702,41 +711,21 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
     <button data-view="grid">Grid</button>
   </div>
   <div id="libListView">
-    <div class="filter-row" id="recentFilter" style="padding-bottom:4px;">
-      <button class="filter-pill" data-era="recent">Recent</button>
-    </div>
-    <div class="filter-row" id="eraFilters">
-      <span class="filter-label">Era:</span>
-      <button class="filter-pill" data-era="all" style="background:var(--sky);color:#000;border-color:var(--sky)">All</button>
-      <button class="filter-pill" data-era="1950">50s</button>
-      <button class="filter-pill" data-era="1960">60s</button>
-      <button class="filter-pill" data-era="1970">70s</button>
-      <button class="filter-pill" data-era="1980">80s</button>
-      <button class="filter-pill" data-era="1990">90s</button>
-      <button class="filter-pill" data-era="2000">00s</button>
-      <button class="filter-pill" data-era="2010">10s</button>
-    </div>
-    <div class="filter-row" id="scoreFilters">
-      <span class="filter-label">Rating:</span>
-      <button class="filter-pill" data-tier="all" style="background:var(--sky);color:#000;border-color:var(--sky)">All</button>
-      <button class="filter-pill" data-tier="90">90+</button>
-      <button class="filter-pill" data-tier="80">80&ndash;89</button>
-      <button class="filter-pill" data-tier="70">70&ndash;79</button>
-      <button class="filter-pill" data-tier="low">Under 70</button>
+    <div class="library-controls">
+      <div class="library-select"><label for="eraSelect">Era</label><select id="eraSelect"><option value="all">All eras</option><option value="recent">Recent</option><option value="1950">1950s</option><option value="1960">1960s</option><option value="1970">1970s</option><option value="1980">1980s</option><option value="1990">1990s</option><option value="2000">2000s</option><option value="2010">2010s</option></select></div>
+      <div class="library-select"><label for="ratingSelect">Rating</label><select id="ratingSelect"><option value="all">All ratings</option><option value="90">90+</option><option value="80">80–89</option><option value="70">70–79</option><option value="low">Under 70</option></select></div>
+      <div class="library-select"><label for="sortSelect">Sort by</label><select id="sortSelect"><option value="desc">Date desc</option><option value="asc">Date asc</option></select></div>
     </div>
     <div class="search-row">
       <input type="text" id="searchInput" placeholder="Search artist or album..." autocomplete="off" autocorrect="off" spellcheck="false">
-      <span id="albumCount">500 albums</span>
     </div>
-    <div class="score-legend"><span class="legend-swatch"><span class="legend-dot" style="background:#E07070"></span>&lt;50</span><span class="legend-swatch"><span class="legend-dot" style="background:#fb923c"></span>50&ndash;69</span><span class="legend-swatch"><span class="legend-dot" style="background:#5B9BF8"></span>70&ndash;89</span><span class="legend-swatch"><span class="legend-dot" style="background:#F5C842"></span>90+ &#9733;</span></div>
     <div class="table-wrap">
       <table id="albumTable">
         <thead>
           <tr>
-            <th data-col="d" title="Day">#</th>
-            <th data-col="sc">Score</th>
+            <th>Score</th>
             <th></th>
-            <th data-col="al" title="Album">Album / Artist</th>
+            <th>Album / Artist</th>
           </tr>
         </thead>
         <tbody id="albumTbody"></tbody>
@@ -3377,7 +3366,7 @@ function renderDiscoverPage() {
 // LIBRARY — dense table + artwork grid (power tools)
 // ════════════════════════════════════════════════════════════
 var libView = 'list';
-var sortCol = 'd', sortAsc = true;
+var sortCol = 'dt', sortAsc = false;
 var filteredData = [];
 var activeEra = 'all';
 var activeTier = 'all';
@@ -3451,7 +3440,6 @@ function renderHistory() {
       scoreHtml = '<span style="color:var(--dim);font-size:10px;">—</span>';
     }
     html += '<tr data-idx="' + idx + '">' +
-      '<td style="color:var(--dim);font-size:11px;">' + (a.d || '—') + '</td>' +
       '<td style="text-align:center;white-space:nowrap;">' + scoreHtml + '</td>' +
       '<td>' + thumb + '</td>' +
       '<td style="min-width:0;max-width:200px;overflow:hidden;">' +
@@ -3461,7 +3449,6 @@ function renderHistory() {
       '</tr>';
   });
   tbody.innerHTML = html;
-  document.getElementById('albumCount').textContent = filteredData.length + ' albums';
 
   tbody.querySelectorAll('tr[data-idx]').forEach(function(row) {
     row.addEventListener('click', function() {
@@ -3480,7 +3467,7 @@ function renderHistory() {
       if (sp) sp = '<div style="margin-top:8px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">' + sp + '</div>';
       var qv = '<div style="margin-top:8px;"><button class="mini-link" style="padding:0;">Open quick view &rarr;</button></div>';
       if (!wh && !tr) wh = '<div style="color:var(--dim)">No notes available.</div>';
-      exp.innerHTML = '<td colspan="4"><div class="expand-inner">' + wh + tr + sp + qv + '</div></td>';
+      exp.innerHTML = '<td colspan="3"><div class="expand-inner">' + wh + tr + sp + qv + '</div></td>';
       exp.querySelector('.mini-link').addEventListener('click', function(ev) {
         ev.stopPropagation();
         openQuickView(a.rec, {why: '', source: 'library'});
@@ -3528,27 +3515,18 @@ function tierOk(a) {
 var searchInput = document.getElementById('searchInput');
 if (searchInput) searchInput.addEventListener('input', applyFilters);
 
-document.querySelectorAll('[data-era]').forEach(function(pill) {
-  pill.addEventListener('click', function() {
-    activeEra = this.getAttribute('data-era');
-    document.querySelectorAll('[data-era]').forEach(function(p) {
-      p.style.background = ''; p.style.color = ''; p.style.borderColor = '';
-    });
-    var c = activeEra === 'all' ? 'var(--sky)' : (ERA_COLORS[activeEra] || 'var(--sky)');
-    this.style.background = c; this.style.color = '#000'; this.style.borderColor = c;
-    applyFilters();
-  });
+document.getElementById('eraSelect').addEventListener('change', function() {
+  activeEra = this.value;
+  applyFilters();
 });
-document.querySelectorAll('#scoreFilters .filter-pill').forEach(function(pill) {
-  pill.addEventListener('click', function() {
-    activeTier = this.getAttribute('data-tier');
-    document.querySelectorAll('#scoreFilters .filter-pill').forEach(function(p) {
-      p.style.background = ''; p.style.color = ''; p.style.borderColor = '';
-    });
-    var c = activeTier === 'all' ? 'var(--sky)' : (TIER_COLORS[activeTier] || 'var(--sky)');
-    this.style.background = c; this.style.color = '#000'; this.style.borderColor = c;
-    applyFilters();
-  });
+document.getElementById('ratingSelect').addEventListener('change', function() {
+  activeTier = this.value;
+  applyFilters();
+});
+document.getElementById('sortSelect').addEventListener('change', function() {
+  sortCol = 'dt';
+  sortAsc = this.value === 'asc';
+  renderHistory();
 });
 
 var ths = document.querySelectorAll('#albumTable th[data-col]');
