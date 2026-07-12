@@ -39,7 +39,11 @@ body{
 button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
 #bgLayer{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
 .ms{position:absolute;pointer-events:none;will-change:transform;font-family:Georgia,serif;line-height:1;user-select:none;}
-.page{display:none;position:relative;z-index:1;max-width:480px;margin:0 auto;padding:16px 16px 24px;}
+.page{
+  display:none;position:relative;z-index:1;max-width:480px;margin:0 auto;padding:16px 16px 24px;
+  background:rgba(11,21,32,0.76);
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+}
 .page.active{display:block;}
 
 /* NAV */
