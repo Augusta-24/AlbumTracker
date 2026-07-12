@@ -156,6 +156,9 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
   border:1px solid var(--border);border-radius:10px;padding:2px 7px;
   max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
+.try-card{display:flex;gap:13px;align-items:center;background:linear-gradient(145deg,rgba(167,139,250,0.13),rgba(20,31,46,0.96));border:1px solid rgba(167,139,250,0.3);border-radius:16px;padding:12px;min-height:112px;}
+.try-card img{width:88px;height:88px;object-fit:cover;border-radius:10px;background:var(--surface2);flex-shrink:0;box-shadow:0 5px 18px rgba(0,0,0,0.45);}
+.try-copy{flex:1;min-width:0;}.try-lane{font-size:9px;color:var(--purple);font-weight:800;text-transform:uppercase;letter-spacing:0.1em;}.try-al{font-size:14px;font-weight:800;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.try-ar{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.try-why{font-size:10px;color:var(--pale);line-height:1.4;margin-top:6px;}.try-actions{display:flex;gap:7px;margin-top:8px;}.try-actions button{border-radius:9px;padding:7px 10px;font-size:10px;font-weight:700;cursor:pointer;}.try-open{background:var(--purple);color:#100b1d;border:none;}.try-again{background:transparent;color:var(--pale);border:1px solid var(--border-mid);}
 .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:26px 0 12px;}
 .sec-head .section-label{margin:0;}
 .sec-action{background:none;border:none;color:var(--sky);font-size:11px;font-weight:600;cursor:pointer;padding:2px 0;}
@@ -611,6 +614,11 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
     <button class="sec-action" id="reshuffleTonight">&#8635; Reshuffle</button>
   </div>
   <div class="tonight-grid" id="tonightGrid"></div>
+
+  <div class="sec-head">
+    <div class="section-label">Try something new</div>
+  </div>
+  <div id="tryNewArea"></div>
 
   <!-- Agency -->
   <div class="agency-row">
@@ -1555,6 +1563,7 @@ function withOwner(fn) {
 function updateOwnerUi() {
   document.getElementById('ownerDot').style.display = isOwner() ? 'block' : 'none';
   renderSpotifySetup();
+  renderTryNew();
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1645,7 +1654,8 @@ function markHandled(promptKey) {
 // SPOTIFY — Authorization Code with PKCE (no client secret)
 // Sync on load + on regaining focus. No polling, no server.
 // ════════════════════════════════════════════════════════════
-var SP_SCOPES = 'user-read-recently-played user-read-currently-playing';
+var SP_SCOPES = 'user-read-recently-played user-read-currently-playing user-top-read';
+var SP_SCOPE_VERSION = 2;
 var lastSyncAt = 0;
 
 function spCfg() {
@@ -1657,6 +1667,7 @@ function spCfg() {
   };
 }
 function spConnected() { var c = spCfg(); return !!(c.cid && c.refresh); }
+function spRecommendationReady() { return spConnected() && lsGet('sp_scope_version', 0) >= SP_SCOPE_VERSION; }
 window.spConnected = spConnected;
 
 function redirectUri() {
@@ -1736,6 +1747,7 @@ window.spHandleRedirect = function(cb) {
     sessionStorage.removeItem('aj4_sp_verifier');
     if (t.access_token) {
       storeTokens(t);
+      lsSet('sp_scope_version', SP_SCOPE_VERSION);
       toast('Spotify connected');
       cb(true);
     } else {
@@ -1746,7 +1758,7 @@ window.spHandleRedirect = function(cb) {
 };
 
 window.spDisconnect = function() {
-  ['sp_access', 'sp_refresh', 'sp_exp', 'sp_after'].forEach(lsDel);
+  ['sp_access', 'sp_refresh', 'sp_exp', 'sp_after', 'sp_scope_version'].forEach(lsDel);
   toast('Spotify disconnected');
 };
 
@@ -2262,7 +2274,7 @@ document.getElementById('settingsBtn').addEventListener('click', function() {
   var spBtn = document.getElementById('setSpBtn');
   if (spBtn) spBtn.addEventListener('click', function() {
     document.getElementById('settingsModal').classList.remove('open');
-    if (spConnected()) { spDisconnect(); renderSpotifySetup(); }
+    if (spConnected()) { spDisconnect(); renderSpotifySetup(); renderTryNew(); }
     else openSpSetup();
   });
   var syncBtn = document.getElementById('setSyncBtn');
@@ -2558,6 +2570,137 @@ document.getElementById('reshuffleTonight').addEventListener('click', function()
   lsSet('tonight_bump', (lsGet('tonight_bump', 0) + 1) % 1000);
   renderTonight();
 });
+
+// ════════════════════════════════════════════════════════════
+// TRY SOMETHING NEW — Spotify taste + catalog, deliberately lightweight
+// ════════════════════════════════════════════════════════════
+var TRY_TOP_ARTISTS = null;
+var tryNewBusy = false;
+
+function editionBase(name) {
+  return norm(String(name || '').replace(/\s*[\(\[]?(deluxe|expanded|remaster(?:ed)?|anniversary|special edition).*$/i, ''));
+}
+function albumIsKnown(a) {
+  var artist = a.artists && a.artists[0] ? a.artists[0].name : '';
+  if (a.id && CAT_BY_ID[a.id]) return true;
+  return CAT.some(function(r) { return norm(r.ar) === norm(artist) && editionBase(r.al) === editionBase(a.name); });
+}
+function spotifyAlbumRec(a) {
+  var artist = a.artists && a.artists[0] ? a.artists[0].name : '';
+  var rec = getOrCreateRec(a.id || '', artist, a.name || '');
+  rec.im = a.images && a.images[0] ? a.images[0].url : rec.im;
+  rec.yr = String(a.release_date || '').substring(0, 4) || rec.yr;
+  rec.au = a.external_urls && a.external_urls.spotify ? a.external_urls.spotify : rec.au;
+  rec.tc = a.total_tracks || rec.tc;
+  if (rec.srcs.indexOf('spotifyRec') === -1) rec.srcs.push('spotifyRec');
+  return rec;
+}
+function renderTryNewState(html) {
+  var area = document.getElementById('tryNewArea');
+  if (area) area.innerHTML = html;
+}
+function renderTryNew() {
+  if (!isOwner()) {
+    renderTryNewState('<div class="setup-card"><div class="txt"><strong>A recommendation just for you.</strong> Owner mode uses your ratings and Spotify taste to find an unheard album.</div></div>');
+    return;
+  }
+  if (!spConnected()) {
+    renderTryNewState('<div class="setup-card"><div class="txt"><strong>Connect Spotify for recommendations.</strong> The app will combine your top artists with Album Journey ratings.</div><button class="btn-pri" id="tryConnect">Connect</button></div>');
+    document.getElementById('tryConnect').addEventListener('click', openSpSetup);
+    return;
+  }
+  if (!spRecommendationReady()) {
+    renderTryNewState('<div class="setup-card"><div class="txt"><strong>One-time Spotify reconnect needed.</strong> This adds read-only access to your top artists. It cannot change your library.</div><button class="btn-pri" id="tryReconnect">Reconnect</button></div>');
+    document.getElementById('tryReconnect').addEventListener('click', function() {
+      var cid = spCfg().cid;
+      spDisconnect();
+      spBeginAuth(cid);
+    });
+    return;
+  }
+  loadTryRecommendation();
+}
+function getTryTopArtists(cb) {
+  if (TRY_TOP_ARTISTS && TRY_TOP_ARTISTS.length) { cb(TRY_TOP_ARTISTS); return; }
+  spApi('/me/top/artists?time_range=long_term&limit=30', function(res) {
+    TRY_TOP_ARTISTS = res && res.items ? res.items : [];
+    cb(TRY_TOP_ARTISTS);
+  });
+}
+function loadTryRecommendation() {
+  if (tryNewBusy) return;
+  tryNewBusy = true;
+  renderTryNewState('<div class="setup-card"><div class="txt"><strong>Looking beyond your shelves…</strong><br>Finding an album you have not logged.</div></div>');
+  getTryTopArtists(function(artists) {
+    if (!artists.length) { tryNewBusy = false; renderTryNewError(); return; }
+    var bump = lsGet('try_new_bump', 0);
+    var lane = bump % 2 === 0 ? 'artist' : 'genre';
+    if (lane === 'artist') loadKnownArtistPick(artists, bump, function(pick) {
+      if (pick) finishTryPick(pick);
+      else loadGenrePick(artists, bump, finishTryPick);
+    });
+    else loadGenrePick(artists, bump, function(pick) {
+      if (pick) finishTryPick(pick);
+      else loadKnownArtistPick(artists, bump, finishTryPick);
+    });
+  });
+}
+function loadKnownArtistPick(artists, bump, cb) {
+  var artist = artists[bump % Math.min(artists.length, 15)];
+  spApi('/artists/' + encodeURIComponent(artist.id) + '/albums?include_groups=album&limit=50', function(res) {
+    var seen = {}, albums = (res && res.items ? res.items : []).filter(function(a) {
+      var base = editionBase(a.name);
+      if (!base || seen[base] || albumIsKnown(a)) return false;
+      seen[base] = true;
+      return a.album_type === 'album';
+    });
+    var a = albums.length ? albums[bump % albums.length] : null;
+    cb(a ? {album: a, lane: 'More from an artist you love', why: artist.name + ' is one of your long-term Spotify favorites, but this album is not in your listening history.'} : null);
+  });
+}
+function loadGenrePick(artists, bump, cb) {
+  var genres = [];
+  artists.slice(0, 20).forEach(function(a) { (a.genres || []).forEach(function(g) { if (genres.indexOf(g) === -1) genres.push(g); }); });
+  if (!genres.length) {
+    CAT.forEach(function(r) { if ((r.latestScore || r.jsc || 0) >= 85) r.gn.forEach(function(g) { if (genres.indexOf(g) === -1) genres.push(g); }); });
+  }
+  if (!genres.length) { cb(null); return; }
+  var genre = genres[bump % Math.min(genres.length, 20)];
+  spApi('/search?q=' + encodeURIComponent('genre:"' + genre + '"') + '&type=album&limit=30', function(res) {
+    var knownArtists = {};
+    CAT.forEach(function(r) { knownArtists[norm(r.ar)] = true; });
+    var albums = res && res.albums && res.albums.items ? res.albums.items.filter(function(a) {
+      var ar = a.artists && a.artists[0] ? a.artists[0].name : '';
+      return a.album_type === 'album' && !albumIsKnown(a) && !knownArtists[norm(ar)];
+    }) : [];
+    var a = albums.length ? albums[bump % albums.length] : null;
+    var anchor = CAT.filter(function(r) { return (r.latestScore || r.jsc || 0) >= 85 && r.gn.some(function(g) { return norm(g) === norm(genre); }); })[0];
+    var why = 'A new artist from ' + genre + ', a lane that shows up in your Spotify taste';
+    if (anchor) why += ' and your ' + (anchor.latestScore || anchor.jsc) + ' for ' + anchor.al;
+    cb(a ? {album: a, lane: 'New artist, familiar territory', why: why + '.'} : null);
+  });
+}
+function finishTryPick(pick) {
+  tryNewBusy = false;
+  if (!pick || !pick.album) { renderTryNewError(); return; }
+  var rec = spotifyAlbumRec(pick.album);
+  renderTryNewState('<div class="try-card">' +
+    (rec.im ? '<img src="' + esc(rec.im) + '" alt="">' : '<div style="width:88px;height:88px;background:var(--surface2);border-radius:10px;"></div>') +
+    '<div class="try-copy"><div class="try-lane">' + esc(pick.lane) + '</div><div class="try-al">' + esc(rec.al) + '</div><div class="try-ar">' + esc(rec.ar) + '</div><div class="try-why">' + esc(pick.why) + '</div>' +
+    '<div class="try-actions"><button class="try-open" id="tryOpen">View album</button><button class="try-again" id="tryAgain">Try another</button></div></div></div>');
+  document.getElementById('tryOpen').addEventListener('click', function() { openQuickView(rec, {why: pick.why, source: 'recommendation'}); });
+  document.getElementById('tryAgain').addEventListener('click', function() {
+    lsSet('try_new_bump', (lsGet('try_new_bump', 0) + 1) % 10000);
+    loadTryRecommendation();
+  });
+}
+function renderTryNewError() {
+  renderTryNewState('<div class="setup-card"><div class="txt"><strong>No fresh match this time.</strong> Spotify may have returned albums already in your history.</div><button class="btn-ghost" id="tryRetry">Try again</button></div>');
+  document.getElementById('tryRetry').addEventListener('click', function() {
+    lsSet('try_new_bump', (lsGet('try_new_bump', 0) + 1) % 10000);
+    loadTryRecommendation();
+  });
+}
 
 // ════════════════════════════════════════════════════════════
 // QUICK VIEW SHEET
