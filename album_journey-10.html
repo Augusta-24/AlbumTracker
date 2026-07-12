@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>The Journey · 500 Albums</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b1520;--surface:#141f2e;--surface2:#1a2a3d;--surface3:#1f3248;
+  --border:rgba(91,155,248,0.11);--border-mid:rgba(91,155,248,0.3);
+  --blue:#2D6BE4;--sky:#5B9BF8;--pale:#A8D4FF;--ghost:rgba(45,107,228,0.1);
+  --text:#F0F7FF;--muted:#7A9CC0;--dim:#3D5A78;
+  --gold:#F5C842;--red:#E07070;--purple:#a78bfa;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);max-width:480px;margin:0 auto;min-height:100vh;overflow-x:hidden;position:relative}
+
+/* MUSIC BG */
+.music-bg{position:fixed;top:0;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;pointer-events:none;z-index:0;overflow:hidden}
+.music-bg svg{width:100%;height:100%;transition:transform 0.05s linear}
+
+/* HERO */
+.hero{position:relative;z-index:2;padding:28px 28px 22px;text-align:center;overflow:hidden}
+.hero-glow{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:360px;height:360px;background:radial-gradient(ellipse at 40% 50%,rgba(45,107,228,0.18) 0%,rgba(167,139,250,0.10) 50%,transparent 70%);pointer-events:none}
+.hero-eyebrow{color:var(--sky);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px}
+.hero-pills{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.hero-pill{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:7px 16px;font-size:13px;color:var(--muted)}
+.hero-pill strong{color:var(--text);font-weight:600}
+
+/* VINYL */
+.vinyl-section{position:relative;z-index:2;padding:28px 24px 24px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;flex-direction:column;align-items:center}
+.vinyl-outer{position:relative;width:200px;height:200px;margin-bottom:18px;cursor:pointer}
+.vinyl-disc{width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 50%,#161616 0 20%,#1c1c1c 20% 21%,#111 21% 29%,#1c1c1c 29% 30%,#111 30% 38%,#1c1c1c 38% 39%,#111 39% 47%,#1c1c1c 47% 48%,#111 48% 100%);box-shadow:0 0 0 1px #252525,0 8px 32px rgba(0,0,0,0.6);animation:vspin 5s linear infinite;display:flex;align-items:center;justify-content:center}
+.vinyl-label{position:absolute;width:72px;height:72px;border-radius:50%;overflow:hidden;z-index:2;border:2px solid rgba(255,255,255,0.07)}
+.vinyl-label img{width:100%;height:100%;object-fit:cover}
+.vinyl-needle{position:absolute;top:-6px;right:-16px;width:3px;height:72px;background:linear-gradient(to bottom,#aaa,#444);border-radius:2px;transform-origin:top center;transform:rotate(22deg);z-index:3}
+.vinyl-needle::after{content:"";position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:7px;height:7px;border-radius:50%;background:#999}
+@keyframes vspin{to{transform:rotate(360deg)}}
+.gold-pill{background:var(--gold);color:#1a1000;font-size:12px;font-weight:800;padding:4px 16px;border-radius:20px;margin-bottom:5px;display:inline-block}
+.vinyl-name{font-size:18px;font-weight:700;margin-bottom:2px;text-align:center}
+.vinyl-artist{color:var(--muted);font-size:13px;margin-bottom:10px}
+.vinyl-tap{color:var(--dim);font-size:11px;margin-bottom:14px}
+.spotify-wrap{width:100%;border-radius:14px;overflow:hidden;background:#000}
+
+/* CHARTS */
+.chart-section{position:relative;z-index:2;padding:24px;border-bottom:1px solid var(--border)}
+.eyebrow{color:var(--dim);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+.dist-chart{display:flex;align-items:flex-end;gap:3px;height:80px;margin-bottom:6px}
+.dist-bar{flex:1;border-radius:3px 3px 0 0;background:var(--surface2);min-height:3px;cursor:pointer;transition:background .15s}
+.dist-bar:hover,.dist-bar.peak{background:var(--purple)}
+.dist-bar.top{background:var(--gold)}
+.dist-bar-labels{display:flex;gap:3px}
+.dist-bar-label{flex:1;text-align:center;color:var(--dim);font-size:8px}
+.chart-note{color:var(--dim);font-size:11px;margin-top:8px}
+.chart-note em{color:var(--pale);font-style:normal}
+
+.timeline-chart-wrap{position:relative;z-index:2;padding:24px;border-bottom:1px solid var(--border)}
+.tl-canvas-wrap{position:relative;width:100%;height:180px;margin-top:8px}
+#tlCanvas{width:100%;height:180px;display:block;cursor:crosshair}
+.tl-tooltip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border-mid);border-radius:10px;padding:8px 10px;font-size:11px;line-height:1.5;min-width:140px;max-width:180px;opacity:0;transition:opacity .15s;z-index:10}
+.tl-tooltip.visible{opacity:1}
+.tl-tip-score{color:var(--sky);font-size:14px;font-weight:700;margin-bottom:2px}
+.tl-tip-album{color:var(--text);font-weight:600}
+.tl-tip-artist{color:var(--muted)}
+.tl-tip-day{color:var(--dim);font-size:10px;margin-top:2px}
+
+/* ERA HEADERS */
+.era-header{position:relative;z-index:3;padding:44px 0 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px}
+.era-decade{font-size:54px;font-weight:900;line-height:1;letter-spacing:-1px;font-family:"Playfair Display",Georgia,serif}
+.era-badge{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;opacity:0.55}
+.era-count{color:var(--dim);font-size:10px;margin-top:2px}
+.era-50s .era-decade{color:#f5a623}.era-50s .era-badge{color:rgba(245,166,35,0.7)}
+.era-60s .era-decade{color:#a78bfa}.era-60s .era-badge{color:rgba(167,139,250,0.7)}
+.era-70s .era-decade{color:#fb923c}.era-70s .era-badge{color:rgba(251,146,60,0.7)}
+.era-80s .era-decade{color:#f472b6}.era-80s .era-badge{color:rgba(244,114,182,0.7)}
+.era-90s .era-decade{color:#6ee7b7}.era-90s .era-badge{color:rgba(110,231,183,0.7)}
+.era-2000s .era-decade{color:#5B9BF8}.era-2000s .era-badge{color:rgba(91,155,248,0.7)}
+.era-2010s .era-decade{color:#F5C842}.era-2010s .era-badge{color:rgba(245,200,66,0.7)}
+
+/* FLYBY */
+.flyby-strip{position:relative;z-index:3;padding:0 0 12px}
+.flyby-scroll{display:flex;gap:8px;padding:4px 24px 8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.flyby-scroll::-webkit-scrollbar{display:none}
+.flyby-item{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 10px 6px 6px;flex-shrink:0;opacity:0.75;transition:opacity .2s}
+.flyby-item:hover{opacity:1}
+.flyby-thumb{width:28px;height:28px;border-radius:5px;background:var(--surface2);overflow:hidden;flex-shrink:0}
+.flyby-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.flyby-artist{color:var(--text);font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
+.flyby-score{color:var(--dim);font-size:10px}
+.flyby-label{color:var(--dim);font-size:10px;letter-spacing:.07em;text-transform:uppercase;padding:0 24px;margin-bottom:6px}
+
+/* ROAD */
+.journey-section{position:relative;z-index:2;padding-top:16px}
+.journey-intro{color:var(--muted);font-size:13px;line-height:1.6;padding:0 24px;margin-bottom:0}
+.road-wrap{position:relative;width:100%}
+/* Canvas sits behind cards, absolutely positioned */
+#roadCanvas{position:absolute;top:0;left:0;pointer-events:none;z-index:1}
+/* Traveler canvas on top */
+#travCanvas{position:absolute;top:0;left:0;pointer-events:none;z-index:3}
+.journey-cards{position:relative;z-index:2;padding:16px 0 24px}
+
+/* MILESTONE CARDS */
+.milestone{position:relative;z-index:2;padding:8px 0;display:flex;
+  transform:scale(0.86);opacity:0.35;
+  transition:transform .4s cubic-bezier(.34,1.04,.64,1),opacity .35s ease;
+  will-change:transform,opacity}
+.milestone.left{padding-left:20px;padding-right:52%;justify-content:flex-start}
+.milestone.right{padding-left:52%;padding-right:20px;justify-content:flex-end}
+.milestone.active{transform:scale(1);opacity:1}
+.milestone.active::before{opacity:1}
+.milestone::before{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:300px;height:220px;border-radius:50%;background:radial-gradient(ellipse,rgba(45,107,228,0.08) 0%,transparent 70%);opacity:0;transition:opacity .5s;pointer-events:none;z-index:1}
+.milestone.gold-stop.active::before{background:radial-gradient(ellipse,rgba(245,200,66,0.1) 0%,transparent 70%)}
+.milestone.red-stop.active::before{background:radial-gradient(ellipse,rgba(224,112,112,0.08) 0%,transparent 70%)}
+
+.m-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;width:100%;position:relative;z-index:2;transition:border-color .3s,box-shadow .3s}
+.m-card.gold-card{border-color:rgba(245,200,66,0.2)}
+.m-card.sky-card{border-color:rgba(91,155,248,0.18)}
+.m-card.red-card{border-color:rgba(139,48,48,0.25)}
+.milestone.active .m-card{border-color:var(--border-mid);box-shadow:0 4px 24px rgba(0,0,0,0.4)}
+.milestone.active .m-card.gold-card{border-color:rgba(245,200,66,0.4);box-shadow:0 4px 24px rgba(245,200,66,0.07)}
+
+.m-art-banner{position:relative;width:100%;height:140px;overflow:hidden;background:var(--surface2)}
+.m-art-banner img{width:100%;height:100%;object-fit:cover;display:block}
+.m-art-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,21,32,0) 0%,rgba(11,21,32,0) 30%,rgba(11,21,32,0.65) 65%,rgba(11,21,32,0.95) 100%);pointer-events:none}
+.m-art-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px}
+.m-overlay{position:absolute;bottom:0;left:0;right:0;padding:7px 10px 8px;z-index:2}
+.m-meta{display:flex;align-items:center;gap:4px;margin-bottom:3px;flex-wrap:wrap}
+.m-day{color:rgba(168,212,255,0.6);font-size:10px}
+.m-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
+.b-blue{background:rgba(45,107,228,0.5);color:#c8ddff;border:1px solid rgba(91,155,248,0.3)}
+.b-gold{background:rgba(245,200,66,0.2);color:var(--gold);border:1px solid rgba(245,200,66,0.3)}
+.b-sky{background:rgba(91,155,248,0.15);color:var(--pale);border:1px solid rgba(91,155,248,0.2)}
+.b-red{background:rgba(139,48,48,0.3);color:var(--red);border:1px solid rgba(139,48,48,0.3)}
+.m-album{color:var(--text);font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px rgba(0,0,0,0.8)}
+.m-artist{color:rgba(122,156,192,0.9);font-size:11px;text-shadow:0 1px 3px rgba(0,0,0,0.8)}
+.m-tracks{padding:7px 10px 8px;color:var(--dim);font-size:10px;letter-spacing:.02em;line-height:1.5;border-top:1px solid var(--border)}
+.milestone.active .m-tracks{color:var(--muted)}
+
+/* FINISH */
+.finish{position:relative;z-index:3;margin:16px 20px 0;padding:28px 20px;background:var(--surface);border:1px solid rgba(91,155,248,0.18);border-radius:20px;text-align:center;transform:scale(0.92);opacity:0.35;transition:transform .4s cubic-bezier(.34,1.04,.64,1),opacity .35s ease}
+.finish.active{transform:scale(1);opacity:1}
+.finish-date{color:var(--sky);font-size:22px;font-weight:700;margin-bottom:2px}
+.finish-day{color:var(--muted);font-size:13px;margin-bottom:20px}
+.finish-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f-stat{background:var(--surface2);border-radius:11px;padding:12px;border:1px solid var(--border)}
+.f-val{font-size:21px;font-weight:700}
+.f-val.gold{color:var(--gold)}.f-val.blue{color:var(--sky)}.f-val.red{color:var(--red)}
+.f-label{color:var(--dim);font-size:10px;margin-top:2px}
+.bottom-pad{height:64px}
+
+@media(min-width:480px){body{border-left:1px solid var(--border);border-right:1px solid var(--border)}}
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND SYMBOLS — fixed, parallax via JS translateY -->
+<div class="music-bg">
+<svg id="bgSvg" viewBox="0 0 390 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+  <text x="22" y="120" font-size="52" fill="rgba(91,155,248,0.22)" font-family="serif">𝄞</text>
+  <text x="330" y="290" font-size="38" fill="rgba(167,139,250,0.20)" font-family="serif">𝄞</text>
+  <text x="40" y="470" font-size="30" fill="rgba(245,200,66,0.18)" font-family="serif">𝄞</text>
+  <text x="338" y="650" font-size="44" fill="rgba(110,231,183,0.18)" font-family="serif">𝄞</text>
+  <text x="16" y="820" font-size="34" fill="rgba(244,114,182,0.18)" font-family="serif">𝄞</text>
+  <text x="80"  y="200" font-size="26" fill="rgba(91,155,248,0.22)" font-family="serif">♪</text>
+  <text x="310" y="160" font-size="20" fill="rgba(167,139,250,0.20)" font-family="serif">♫</text>
+  <text x="355" y="400" font-size="26" fill="rgba(245,200,66,0.20)" font-family="serif">♩</text>
+  <text x="20"  y="530" font-size="22" fill="rgba(244,114,182,0.22)" font-family="serif">♪</text>
+  <text x="358" y="710" font-size="26" fill="rgba(110,231,183,0.20)" font-family="serif">♫</text>
+  <text x="340" y="490" font-size="30" fill="rgba(91,155,248,0.18)" font-family="serif">𝄢</text>
+  <text x="14"  y="870" font-size="26" fill="rgba(245,200,66,0.18)" font-family="serif">𝄢</text>
+  <!-- Vinyl rings -->
+  <circle cx="362" cy="88"  r="22" fill="none" stroke="rgba(91,155,248,0.28)"  stroke-width="1.5"/>
+  <circle cx="362" cy="88"  r="13" fill="none" stroke="rgba(91,155,248,0.20)"  stroke-width="1.2"/>
+  <circle cx="362" cy="88"  r="4"  fill="none" stroke="rgba(91,155,248,0.28)"  stroke-width="1.2"/>
+  <circle cx="24"  cy="360" r="19" fill="none" stroke="rgba(167,139,250,0.26)" stroke-width="1.5"/>
+  <circle cx="24"  cy="360" r="11" fill="none" stroke="rgba(167,139,250,0.18)" stroke-width="1.2"/>
+  <circle cx="24"  cy="360" r="3"  fill="none" stroke="rgba(167,139,250,0.26)" stroke-width="1.2"/>
+  <circle cx="366" cy="570" r="18" fill="none" stroke="rgba(245,200,66,0.26)"  stroke-width="1.5"/>
+  <circle cx="366" cy="570" r="11" fill="none" stroke="rgba(245,200,66,0.18)"  stroke-width="1.2"/>
+  <circle cx="366" cy="570" r="3"  fill="none" stroke="rgba(245,200,66,0.26)"  stroke-width="1.2"/>
+  <circle cx="22"  cy="760" r="20" fill="none" stroke="rgba(110,231,183,0.26)" stroke-width="1.5"/>
+  <circle cx="22"  cy="760" r="12" fill="none" stroke="rgba(110,231,183,0.18)" stroke-width="1.2"/>
+  <circle cx="22"  cy="760" r="4"  fill="none" stroke="rgba(110,231,183,0.26)" stroke-width="1.2"/>
+  <!-- Guitar bodies -->
+  <ellipse cx="358" cy="218" rx="13" ry="17" fill="none" stroke="rgba(91,155,248,0.24)" stroke-width="1.2"/>
+  <ellipse cx="358" cy="241" rx="10" ry="13" fill="none" stroke="rgba(91,155,248,0.18)" stroke-width="1.2"/>
+  <line x1="358" y1="205" x2="358" y2="184" stroke="rgba(91,155,248,0.24)" stroke-width="1.2"/>
+  <ellipse cx="26"  cy="640" rx="12" ry="16" fill="none" stroke="rgba(167,139,250,0.24)" stroke-width="1.2"/>
+  <ellipse cx="26"  cy="661" rx="9"  ry="12" fill="none" stroke="rgba(167,139,250,0.18)" stroke-width="1.2"/>
+  <line x1="26"  y1="628" x2="26"  y2="610" stroke="rgba(167,139,250,0.24)" stroke-width="1.2"/>
+</svg>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <p class="hero-eyebrow">500 albums &nbsp;·&nbsp; Apr 27, 2025 — Jun 13, 2026</p>
+  <div class="hero-pills">
+    <span class="hero-pill"><strong>335</strong> days</span>
+    <span class="hero-pill"><strong>324</strong> artists</span>
+    <span class="hero-pill"><strong>29</strong> scored 90+</span>
+    <span class="hero-pill">avg <strong>72</strong></span>
+  </div>
+</div>
+
+<!-- VINYL — Blackbird, the only 100 -->
+<div class="vinyl-section">
+  <div class="vinyl-outer" id="vinylOuter">
+    <div class="vinyl-disc" id="vinylDisc">
+      <div class="vinyl-label">
+        <img src="https://i.scdn.co/image/ab67616d0000b27333fe3896fc5aef6cb728b467" alt="Blackbird"
+          onerror="this.parentElement.style.background='#2D6BE4';this.remove()">
+      </div>
+    </div>
+    <div class="vinyl-needle"></div>
+  </div>
+  <p class="vinyl-name">Blackbird</p>
+  <p class="vinyl-artist">Alter Bridge</p>
+  <span class="gold-pill">100 / 100</span>
+  <p class="vinyl-tap">tap to pause</p>
+  <div class="spotify-wrap">
+    <iframe src="https://open.spotify.com/embed/album/21lOBQT94kjWSiYQbpm3RG?utm_source=generator&theme=0"
+      width="100%" height="152" frameborder="0"
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy">
+    </iframe>
+  </div>
+</div>
+
+<!-- SCORE DISTRIBUTION -->
+<div class="chart-section">
+  <p class="eyebrow">Score distribution</p>
+  <div class="dist-chart" id="distChart"></div>
+  <div class="dist-bar-labels" id="distLabels"></div>
+  <p class="chart-note">Most albums land in the <em>60s–70s</em> &nbsp;·&nbsp; Only <em>1</em> perfect 100</p>
+</div>
+
+<!-- TIMELINE CHART -->
+<div class="timeline-chart-wrap">
+  <p class="eyebrow">Rating over time</p>
+  <div class="tl-canvas-wrap">
+    <canvas id="tlCanvas"></canvas>
+    <div class="tl-tooltip" id="tlTip">
+      <div class="tl-tip-score" id="tipScore"></div>
+      <div class="tl-tip-album" id="tipAlbum"></div>
+      <div class="tl-tip-artist" id="tipArtist"></div>
+      <div class="tl-tip-day" id="tipDay"></div>
+    </div>
+  </div>
+</div>
+
+<!-- JOURNEY ROAD -->
+<div class="journey-section">
+  <p class="eyebrow" style="padding:0 24px;margin-bottom:6px">The journey</p>
+  <p class="journey-intro">70 years of music. 500 albums. Scroll through the eras.</p>
+  <div class="road-wrap" id="roadWrap">
+    <canvas id="roadCanvas"></canvas>
+    <canvas id="travCanvas"></canvas>
+    <div class="journey-cards" id="journeyCards">
+      <div class="era-header era-50s">
+        <div class="era-decade">1950s</div>
+        <div class="era-badge">Birth of Rock</div>
+        <div class="era-count">13 albums</div>
+      </div>
+      <div class="flyby-label">From this era</div>
+      <div class="flyby-strip"><div class="flyby-scroll" id="fly-50s"></div></div>
+      <div class="milestone left">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b273c6c513f39a29c6958f83f8aa" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 1</span><span class="m-badge b-blue">81</span><span class="m-badge b-sky">Album #1</span></div>
+              <p class="m-album">The "Chirping" Crickets</p>
+              <p class="m-artist">Buddy Holly and the Crickets</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="milestone right">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b273d4f8a582c0c3a3d67f395c6d" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎤</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 3</span><span class="m-badge b-blue">86</span><span class="m-badge b-sky">50s best</span></div>
+              <p class="m-album">In the Wee Small Hours</p>
+              <p class="m-artist">Frank Sinatra</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="era-header era-60s">
+        <div class="era-decade">1960s</div>
+        <div class="era-badge">The British Invasion</div>
+        <div class="era-count">56 albums</div>
+      </div>
+      <div class="flyby-label">From this era</div>
+      <div class="flyby-strip"><div class="flyby-scroll" id="fly-60s"></div></div>
+      <div class="milestone right">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b273dc30583ba717007b00cceb25" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 17</span><span class="m-badge b-blue">93</span><span class="m-badge b-sky">Beatles &middot; best of 13</span></div>
+              <p class="m-album">Abbey Road</p>
+              <p class="m-artist">The Beatles</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="milestone left">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b2739f39192f9f8ca1c90847b3e5" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 51</span><span class="m-badge b-blue">92</span><span class="m-badge b-sky">CCR &middot; best of 4</span></div>
+              <p class="m-album">Willy and the Poor Boys</p>
+              <p class="m-artist">Creedence Clearwater Revival</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="era-header era-70s">
+        <div class="era-decade">1970s</div>
+        <div class="era-badge">Classic Rock Peak</div>
+        <div class="era-count">86 albums</div>
+      </div>
+      <div class="flyby-label">From this era</div>
+      <div class="flyby-strip"><div class="flyby-scroll" id="fly-70s"></div></div>
+      <div class="milestone right">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b273765b0617b572bdd1dbdc7d8e" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 56</span><span class="m-badge b-blue">93</span><span class="m-badge b-sky">Zeppelin &middot; best of 8</span></div>
+              <p class="m-album">Physical Graffiti</p>
+              <p class="m-artist">Led Zeppelin</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="milestone left">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b273ea7caaff71dea1051d49b2fe" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 60</span><span class="m-badge b-blue">89</span></div>
+              <p class="m-album">The Dark Side of the Moon</p>
+              <p class="m-artist">Pink Floyd</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="milestone right">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b273763da84add664535b418ffb7" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 93</span><span class="m-badge b-blue">95</span></div>
+              <p class="m-album">Rocks</p>
+              <p class="m-artist">Aerosmith</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="era-header era-80s">
+        <div class="era-decade">1980s</div>
+        <div class="era-badge">New Wave & Metal</div>
+        <div class="era-count">88 albums</div>
+      </div>
+      <div class="flyby-label">From this era</div>
+      <div class="flyby-strip"><div class="flyby-scroll" id="fly-80s"></div></div>
+      <div class="milestone left red-stop">
+        <div class="m-card red-card">
+          <div class="m-art-banner">
+            <img src="" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">😬</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Aug 2025</span><span class="m-badge b-red">15 &middot; 16 &middot; 18</span></div>
+              <p class="m-album">Three Bob Dylan Albums</p>
+              <p class="m-artist">Bob Dylan</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="milestone right">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b2730b51f8d91f3a21e8426361ae" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day"></span><span class="m-badge b-blue">88</span></div>
+              <p class="m-album">Back in Black</p>
+              <p class="m-artist">AC/DC</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="milestone left">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b27321ebf49b3292c3f0f575f0f5" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day"></span><span class="m-badge b-blue">84</span></div>
+              <p class="m-album">Appetite for Destruction</p>
+              <p class="m-artist">Guns N Roses</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="era-header era-90s">
+        <div class="era-decade">1990s</div>
+        <div class="era-badge">The Grunge Era</div>
+        <div class="era-count">99 albums</div>
+      </div>
+      <div class="flyby-label">From this era</div>
+      <div class="flyby-strip"><div class="flyby-scroll" id="fly-90s"></div></div>
+      <div class="milestone right">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b273e175a19e530c898d167d39bf" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 154</span><span class="m-badge b-blue">95</span></div>
+              <p class="m-album">Nevermind</p>
+              <p class="m-artist">Nirvana</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="milestone left">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b273d400d27cba05bb0545533864" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 170</span><span class="m-badge b-blue">98</span><span class="m-badge b-sky">#2 all time</span></div>
+              <p class="m-album">Ten</p>
+              <p class="m-artist">Pearl Jam</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="milestone right">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b2736a760642a56847027428cb61" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 185</span><span class="m-badge b-blue">96</span></div>
+              <p class="m-album">Grace</p>
+              <p class="m-artist">Jeff Buckley</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="milestone left">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b273f8f048a5f4749c970078a4fb" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 222</span><span class="m-badge b-blue">97</span></div>
+              <p class="m-album">Human Clay</p>
+              <p class="m-artist">Creed</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="era-header era-2000s">
+        <div class="era-decade">2000s</div>
+        <div class="era-badge">Alt Rock & Blues</div>
+        <div class="era-count">86 albums</div>
+      </div>
+      <div class="flyby-label">From this era</div>
+      <div class="flyby-strip"><div class="flyby-scroll" id="fly-2000s"></div></div>
+      <div class="milestone right">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b273a7292b6863258e889b78d787" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 243</span><span class="m-badge b-blue">96</span><span class="m-badge b-sky">Christmas</span></div>
+              <p class="m-album">Audioslave</p>
+              <p class="m-artist">Audioslave</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="milestone left">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b2737af5fdc5ef048a68db62b85f" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 268</span><span class="m-badge b-blue">95</span></div>
+              <p class="m-album">Continuum</p>
+              <p class="m-artist">John Mayer</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="milestone right gold-stop">
+        <div class="m-card gold-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b27333fe3896fc5aef6cb728b467" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 271</span><span class="m-badge b-gold">100 / 100</span></div>
+              <p class="m-album">Blackbird</p>
+              <p class="m-artist">Alter Bridge</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="era-header era-2010s">
+        <div class="era-decade">2010s</div>
+        <div class="era-badge">Modern</div>
+        <div class="era-count">72 albums</div>
+      </div>
+      <div class="flyby-label">From this era</div>
+      <div class="flyby-strip"><div class="flyby-scroll" id="fly-2010s"></div></div>
+      <div class="milestone left">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b2734ae1c4c5c45aabe565499163" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 286</span><span class="m-badge b-gold">94</span></div>
+              <p class="m-album">AM</p>
+              <p class="m-artist">Arctic Monkeys</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+      </div>
+      <div class="milestone right">
+        <div class="m-card">
+          <div class="m-art-banner">
+            <img src="https://i.scdn.co/image/ab67616d0000b2732118bf9b198b05a95ded6300" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="m-art-fallback" style="display:none">🎵</div>
+            <div class="m-overlay">
+              <div class="m-meta"><span class="m-day">Day 290</span><span class="m-badge b-gold">93</span></div>
+              <p class="m-album">21</p>
+              <p class="m-artist">Adele</p>
+            </div>
+          </div>
+          <div class="m-tracks"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FINISH -->
+<div class="finish" id="finish">
+  <p class="finish-date">June 13, 2026</p>
+  <p class="finish-day">Day 335 &nbsp;·&nbsp; 500 albums &nbsp;·&nbsp; 324 artists</p>
+  <div class="finish-grid">
+    <div class="f-stat"><p class="f-val blue">29</p><p class="f-label">scored 90+</p></div>
+    <div class="f-stat"><p class="f-val gold">1</p><p class="f-label">perfect 100</p></div>
+    <div class="f-stat"><p class="f-val">13</p><p class="f-label">Beatles albums</p></div>
+    <div class="f-stat"><p class="f-val red">15</p><p class="f-label">lowest (Dylan)</p></div>
+  </div>
+</div>
+<div class="bottom-pad"></div>
+
+<script type="text/javascript">
+
+// ==========================================
+// FLYBY STRIPS
+// ==========================================
+const eraData={"50s": [{"a": "Frank Sinatra", "n": "In the Wee Small Hours", "r": 86, "img": "https://i.scdn.co/image/ab67616d0000b273d4f8a582c0c3a3d67f395c6d"}, {"a": "Buddy Holly", "n": "The Chirping Crickets", "r": 81, "img": "https://i.scdn.co/image/ab67616d0000b273c6c513f39a29c6958f83f8aa"}, {"a": "Bill Haley", "n": "Rock Around the Clock", "r": 77, "img": "https://i.scdn.co/image/ab67616d0000b2739060a2c0a01366ee03274597"}, {"a": "Johnny Cash", "n": "Hot and Blue Guitar", "r": 72, "img": "https://i.scdn.co/image/ab67616d0000b27343839850e3cc4e0568cf0dca"}, {"a": "Elvis Presley", "n": "Elvis Presley", "r": 71, "img": "https://i.scdn.co/image/ab67616d0000b273f45cec7e72b9dec993c18872"}, {"a": "Chuck Berry", "n": "Berry Is on Top", "r": 68, "img": "https://i.scdn.co/image/ab67616d0000b273a496dc8c33ca6d10668b3157"}], "60s": [{"a": "The Beatles", "n": "Abbey Road", "r": 93, "img": "https://i.scdn.co/image/ab67616d0000b273dc30583ba717007b00cceb25"}, {"a": "CCR", "n": "Willy and the Poor Boys", "r": 92, "img": "https://i.scdn.co/image/ab67616d0000b2739f39192f9f8ca1c90847b3e5"}, {"a": "Led Zeppelin", "n": "Led Zeppelin", "r": 91, "img": "https://i.scdn.co/image/ab67616d0000b2739046aeba4babbd4b7af77548"}, {"a": "Aretha Franklin", "n": "I Never Loved a Man...", "r": 89, "img": "https://i.scdn.co/image/ab67616d0000b2736aa9314b7ddfbd8f036ba3ac"}, {"a": "Sam Cooke", "n": "Night Beat", "r": 86, "img": "https://i.scdn.co/image/ab67616d0000b27347e92d736f178e95bf50d3ed"}, {"a": "The Beatles", "n": "Rubber Soul", "r": 84, "img": "https://i.scdn.co/image/ab67616d0000b273ed801e58a9ababdea6ac7ce4"}, {"a": "The Beatles", "n": "Revolver", "r": 81, "img": "https://i.scdn.co/image/ab67616d0000b27328b8b9b46428896e6491e97a"}, {"a": "Steppenwolf", "n": "Steppenwolf", "r": 81, "img": "https://i.scdn.co/image/ab67616d0000b273e2aacda30b100cc33d523be0"}], "70s": [{"a": "Aerosmith", "n": "Rocks", "r": 95, "img": "https://i.scdn.co/image/ab67616d0000b273763da84add664535b418ffb7"}, {"a": "Led Zeppelin", "n": "Physical Graffiti", "r": 93, "img": "https://i.scdn.co/image/ab67616d0000b273765b0617b572bdd1dbdc7d8e"}, {"a": "Billy Joel", "n": "The Stranger", "r": 93, "img": "https://i.scdn.co/image/ab67616d0000b2736ce61113662ecf693b605ee5"}, {"a": "Led Zeppelin", "n": "Led Zeppelin IV", "r": 92, "img": "https://i.scdn.co/image/ab67616d0000b273c8a11e48c91a982d086afc69"}, {"a": "Sex Pistols", "n": "Never Mind the Bollocks", "r": 92, "img": "https://i.scdn.co/image/ab67616d0000b273d0f19de33459c832e50d6ecd"}, {"a": "Pink Floyd", "n": "Dark Side of the Moon", "r": 89, "img": "https://i.scdn.co/image/ab67616d0000b273ea7caaff71dea1051d49b2fe"}, {"a": "Stevie Wonder", "n": "Songs in the Key of Life", "r": 88, "img": "https://i.scdn.co/image/ab67616d0000b2732fee61bfec596bb6f5447c50"}, {"a": "Pink Floyd", "n": "Wish You Were Here", "r": 87, "img": "https://i.scdn.co/image/ab67616d0000b2731a84d71391df7469c5ab8539"}], "80s": [{"a": "Aerosmith", "n": "Pump", "r": 94, "img": "https://i.scdn.co/image/ab67616d0000b2737286808a6e05a3c35d100db6"}, {"a": "AC/DC", "n": "Back in Black", "r": 88, "img": "https://i.scdn.co/image/ab67616d0000b2730b51f8d91f3a21e8426361ae"}, {"a": "Bon Jovi", "n": "Slippery When Wet", "r": 88, "img": "https://i.scdn.co/image/ab67616d0000b2731336b31b6a1799f0de5807ac"}, {"a": "Def Leppard", "n": "Pyromania", "r": 86, "img": "https://i.scdn.co/image/ab67616d0000b273e45161990e83649071399525"}, {"a": "Def Leppard", "n": "Hysteria", "r": 86, "img": "https://i.scdn.co/image/ab67616d0000b27343511b8c20112757edddc7ba"}, {"a": "Guns N Roses", "n": "Appetite for Destruction", "r": 84, "img": "https://i.scdn.co/image/ab67616d0000b27321ebf49b3292c3f0f575f0f5"}, {"a": "Bruce Springsteen", "n": "Born in the U.S.A.", "r": 86, "img": "https://i.scdn.co/image/ab67616d0000b273a7865e686c36a4adda6c9978"}], "90s": [{"a": "Pearl Jam", "n": "Ten", "r": 98, "img": "https://i.scdn.co/image/ab67616d0000b273d400d27cba05bb0545533864"}, {"a": "Pearl Jam", "n": "Vs.", "r": 97, "img": "https://i.scdn.co/image/ab67616d0000b273777344aba9d5b5785b4593a5"}, {"a": "Creed", "n": "Human Clay", "r": 97, "img": "https://i.scdn.co/image/ab67616d0000b273f8f048a5f4749c970078a4fb"}, {"a": "Jeff Buckley", "n": "Grace", "r": 96, "img": "https://i.scdn.co/image/ab67616d0000b2736a760642a56847027428cb61"}, {"a": "Nirvana", "n": "Nevermind", "r": 95, "img": "https://i.scdn.co/image/ab67616d0000b273e175a19e530c898d167d39bf"}, {"a": "Fugees", "n": "The Score", "r": 93, "img": "https://i.scdn.co/image/ab67616d0000b2735b7865be7f7fcc05faec6137"}, {"a": "Soundgarden", "n": "Superunknown", "r": 92, "img": "https://i.scdn.co/image/ab67616d0000b273ae6d8e36136353d550b2587d"}, {"a": "Rage Against the Machine", "n": "Rage Against the Machine", "r": 88, "img": "https://i.scdn.co/image/ab67616d0000b27354ab617bc2d4974ab6ffbece"}], "2000s": [{"a": "Alter Bridge", "n": "Blackbird", "r": 100, "img": "https://i.scdn.co/image/ab67616d0000b27333fe3896fc5aef6cb728b467"}, {"a": "Audioslave", "n": "Audioslave", "r": 96, "img": "https://i.scdn.co/image/ab67616d0000b273a7292b6863258e889b78d787"}, {"a": "The White Stripes", "n": "White Blood Cells", "r": 95, "img": "https://i.scdn.co/image/ab67616d0000b273c6084929566743530de8c721"}, {"a": "John Mayer", "n": "Continuum", "r": 95, "img": "https://i.scdn.co/image/ab67616d0000b2737af5fdc5ef048a68db62b85f"}, {"a": "The White Stripes", "n": "Elephant", "r": 90, "img": "https://i.scdn.co/image/ab67616d0000b273a69f71a8794e2d867a52f98f"}, {"a": "The Strokes", "n": "Is This It", "r": 88, "img": "https://i.scdn.co/image/ab67616d0000b27313f2466b83507515291acce4"}, {"a": "My Chemical Romance", "n": "Three Cheers...", "r": 88, "img": "https://i.scdn.co/image/ab67616d0000b273cab7ae4868e9f9ce6bdfdf43"}, {"a": "Gnarls Barkley", "n": "St. Elsewhere", "r": 85, "img": "https://i.scdn.co/image/ab67616d0000b273ab051a2c680f39c0d9827706"}], "2010s": [{"a": "Arctic Monkeys", "n": "AM", "r": 94, "img": "https://i.scdn.co/image/ab67616d0000b2734ae1c4c5c45aabe565499163"}, {"a": "Adele", "n": "21", "r": 93, "img": "https://i.scdn.co/image/ab67616d0000b2732118bf9b198b05a95ded6300"}, {"a": "Ren", "n": "Sick Boi", "r": 91, "img": "https://i.scdn.co/image/ab67616d0000b273c57dbf922a7598c875eec4ae"}, {"a": "The Black Keys", "n": "Brothers", "r": 86, "img": "https://i.scdn.co/image/ab67616d0000b27343f5bd543a2a1ab37fb40a8b"}, {"a": "Tame Impala", "n": "Currents", "r": 86, "img": "https://i.scdn.co/image/ab67616d0000b2739e1cfc756886ac782e363d79"}, {"a": "Kendrick Lamar", "n": "DAMN.", "r": 86, "img": "https://i.scdn.co/image/ab67616d0000b2738b52c6b9bc4e43d873869699"}, {"a": "Noah Kahan", "n": "Stick Season", "r": 85, "img": "https://i.scdn.co/image/ab67616d0000b2736ee35072df1af802cca09918"}]};
+const stripMap={"50s":"fly-50s","60s":"fly-60s","70s":"fly-70s","80s":"fly-80s","90s":"fly-90s","2000s":"fly-2000s","2010s":"fly-2010s"};
+Object.entries(stripMap).forEach(([era,id])=>{
+  const el=document.getElementById(id);
+  if(!el) return;
+  (eraData[era]||[]).forEach(item=>{
+    const d=document.createElement("div");
+    d.className="flyby-item";
+    d.innerHTML=`<div class="flyby-thumb"><img src="${item.img}" alt="" loading="lazy" onerror="this.parentElement.style.background='#1a2a3d';this.remove()"></div><div><div class="flyby-artist">${item.a}</div><div class="flyby-score">${item.r}</div></div>`;
+    el.appendChild(d);
+  });
+});
+
+// ==========================================
+// SCORE DISTRIBUTION CHART
+// ==========================================
+const dist=[[10,3],[20,2],[30,6],[40,19],[50,41],[60,107],[70,186],[80,107],[90,28],[100,1]];
+const maxD=186;
+dist.forEach(([score,count])=>{
+  const b=document.createElement("div");
+  b.className="dist-bar"+(score===70?" peak":score===100?" top":"");
+  b.style.height=Math.max(2,(count/maxD)*100)+"%";
+  b.title=score+"s: "+count+" albums";
+  document.getElementById("distChart").appendChild(b);
+  const l=document.createElement("div");
+  l.className="dist-bar-label";
+  l.textContent=score+"s";
+  document.getElementById("distLabels").appendChild(l);
+});
+
+// ==========================================
+// TIMELINE CHART
+// ==========================================
+const TL=[{"d": 1, "r": 81.0, "a": "Buddy Holly and the Crickets", "n": "The \u201cChirping\u201d Crickets", "img": "https://i.scdn.co/image/ab67616d0000b273c6c513f39a29c6958f83f8aa"}, {"d": 1, "r": 68.0, "a": "Chuck Berry", "n": "Berry Is on Top", "img": "https://i.scdn.co/image/ab67616d0000b273a496dc8c33ca6d10668b3157"}, {"d": 2, "r": 77.0, "a": "Bill Haley & His Comets", "n": "Rock Around the Clock", "img": "https://i.scdn.co/image/ab67616d0000b2739060a2c0a01366ee03274597"}, {"d": 3, "r": 86.0, "a": "Frank Sinatra", "n": "In the Wee Small Hours", "img": "https://i.scdn.co/image/ab67616d0000b273d4f8a582c0c3a3d67f395c6d"}, {"d": 4, "r": 52.0, "a": "Billie Holiday", "n": "Lady Sings the Blues", "img": "https://i.scdn.co/image/ab67616d0000b273bcbe631265927b8ed01ac276"}, {"d": 5, "r": 71.0, "a": "Elvis Presley", "n": "Elvis Presley", "img": "https://i.scdn.co/image/ab67616d0000b273f45cec7e72b9dec993c18872"}, {"d": 6, "r": 84.0, "a": "Elvis Presley", "n": "Elvis 30 #1 Hits", "img": "https://i.scdn.co/image/ab67616d0000b273a0b8a1ce10fddbba6879262e"}, {"d": 6, "r": 73.0, "a": "Lonnie Donegan", "n": "King of Skiffle", "img": "https://i.scdn.co/image/ab67616d0000b2736456769897bc96bd36aa040a"}, {"d": 7, "r": 62.0, "a": "Carl Perkins", "n": "The Dance Album", "img": "https://i.scdn.co/image/ab67616d0000b27356cb96b27916cc2db4d9aeaf"}, {"d": 7, "r": 57.0, "a": "Eddie Cochran", "n": "Singin\u2019 to My Baby", "img": "https://i.scdn.co/image/ab67616d0000b273237f49ac63846ec378ac4a80"}, {"d": 7, "r": 72.0, "a": "Johnny Cash", "n": "Johnny Cash with His Hot and B", "img": "https://i.scdn.co/image/ab67616d0000b27343839850e3cc4e0568cf0dca"}, {"d": 8, "r": 78.0, "a": "Johnny Cash", "n": "American IV: The Man Comes Aro", "img": "https://i.scdn.co/image/ab67616d0000b2736f4f62da3d811b6501a69ffa"}, {"d": 8, "r": 72.0, "a": "Ricky Nelson", "n": "Ricky", "img": "https://i.scdn.co/image/ab67616d0000b273ddea09d25600995a84a26e78"}, {"d": 9, "r": 86.0, "a": "Sam Cooke", "n": "Night Beat", "img": "https://i.scdn.co/image/ab67616d0000b27347e92d736f178e95bf50d3ed"}, {"d": 9, "r": 75.0, "a": "Sam Cooke", "n": "Ain't The Good News", "img": "https://i.scdn.co/image/ab67616d0000b2738eb25c6bc74158e97d389890"}, {"d": 10, "r": 69.0, "a": "Bo Diddley", "n": "Go Bo Diddley", "img": "https://i.scdn.co/image/ab67616d0000b273b8179bbbb0fbcc3aa980cb6d"}, {"d": 11, "r": 74.0, "a": "Johnny Kidd & the Pirates", "n": "Shakin\u2019 All Over", "img": "https://i.scdn.co/image/ab67616d0000b273161e156498ad06c998e91ad2"}, {"d": 12, "r": 62.0, "a": "The Beatles", "n": "Please Please Me", "img": "https://i.scdn.co/image/ab67616d0000b273dbeec63ad914c973e75c24df"}, {"d": 12, "r": 57.0, "a": "The Beatles", "n": "With the Beatles", "img": "https://i.scdn.co/image/ab67616d0000b273608a63ad5b18e99da94a3f73"}, {"d": 13, "r": 72.0, "a": "The Beatles", "n": "A Hard Day\u2019s Night", "img": "https://i.scdn.co/image/ab67616d0000b273e230f303815e82a86713eedd"}, {"d": 13, "r": 68.0, "a": "The Beatles", "n": "Beatles for Sale", "img": "https://i.scdn.co/image/ab67616d0000b27355612ece447bec5d62c68375"}, {"d": 14, "r": 77.0, "a": "The Beatles", "n": "Help!", "img": "https://i.scdn.co/image/ab67616d0000b273e3e3b64cea45265469d4cafa"}, {"d": 14, "r": 84.0, "a": "The Beatles", "n": "Rubber Soul", "img": "https://i.scdn.co/image/ab67616d0000b273ed801e58a9ababdea6ac7ce4"}, {"d": 15, "r": 81.0, "a": "The Beatles", "n": "Revolver", "img": "https://i.scdn.co/image/ab67616d0000b27328b8b9b46428896e6491e97a"}, {"d": 15, "r": 78.0, "a": "The Beatles", "n": "Magical Mystery Tour", "img": "https://i.scdn.co/image/ab67616d0000b273692d9189b2bd75525893f0c1"}, {"d": 16, "r": 81.0, "a": "The Beatles", "n": "Sgt. Pepper\u2019s Lonely Hearts Cl", "img": "https://i.scdn.co/image/ab67616d0000b27334ef8f7d06cf2fc2146f420a"}, {"d": 16, "r": 76.0, "a": "The Beatles", "n": "The Beatles (White Album)", "img": "https://i.scdn.co/image/ab67616d0000b2734ce8b4e42588bf18182a1ad2"}, {"d": 17, "r": 75.0, "a": "The Beatles", "n": "Yellow Submarine", "img": "https://i.scdn.co/image/ab67616d0000b273d807dd713cdfbeed142881e2"}, {"d": 17, "r": 93.0, "a": "The Beatles", "n": "Abbey Road", "img": "https://i.scdn.co/image/ab67616d0000b273dc30583ba717007b00cceb25"}, {"d": 18, "r": 71.0, "a": "The Beatles", "n": "Let It Be", "img": "https://i.scdn.co/image/ab67616d0000b27384243a01af3c77b56fe01ab1"}, {"d": 19, "r": 63.0, "a": "The Kinks", "n": "Kinks", "img": "https://i.scdn.co/image/ab67616d0000b2733b662e4bab01440eb4f31793"}, {"d": 20, "r": 62.0, "a": "The Kinks", "n": "The Kinks Are the Village Gree", "img": "https://i.scdn.co/image/ab67616d0000b273afa6b2613bf2504d57b52e06"}, {"d": 21, "r": 15.0, "a": "Bob Dylan", "n": "Highway 61 Revisited", "img": "https://i.scdn.co/image/ab67616d0000b27341720ef0ae31e10d39e43ca2"}, {"d": 22, "r": 16.0, "a": "Bob Dylan", "n": "Blonde on Blonde", "img": "https://i.scdn.co/image/ab67616d0000b273c51563a479fa5a4917311197"}, {"d": 23, "r": 18.0, "a": "Bob Dylan", "n": "Blood on the Tracks", "img": "https://i.scdn.co/image/ab67616d0000b27372ca15b8637acbc7d15ff5ba"}, {"d": 24, "r": 47.0, "a": "Nina Simone", "n": "Pastel Blues", "img": "https://i.scdn.co/image/ab67616d0000b273df49506f74db624312118ca2"}, {"d": 25, "r": 38.0, "a": "The Byrds", "n": "Mr. Tambourine Man", "img": "https://i.scdn.co/image/ab67616d0000b273576fccf9a91d9f7c808b8abd"}, {"d": 26, "r": 58.0, "a": "The Who", "n": "My Generation", "img": "https://i.scdn.co/image/ab67616d0000b273cbee7274742b0471f39bb8c8"}, {"d": 27, "r": 59.0, "a": "The Who", "n": "Tommy", "img": "https://i.scdn.co/image/ab67616d0000b27374ecb94bc3e5d851a39a0334"}, {"d": 28, "r": 84.0, "a": "The Who", "n": "Who\u2019s Next", "img": "https://i.scdn.co/image/ab67616d0000b273d993d0cd47c0b948d36553c8"}, {"d": 29, "r": 57.0, "a": "Buffalo Springfield", "n": "Buffalo Springfield", "img": "https://i.scdn.co/image/ab67616d0000b273d231bd1716b71b6444e25f89"}, {"d": 30, "r": 61.0, "a": "Buffalo Springfield", "n": "Buffalo Springfield Again", "img": "https://i.scdn.co/image/ab67616d0000b27308332e0b0aba8467f891d76f"}, {"d": 31, "r": 59.0, "a": "Buffalo Springfield", "n": "Last Time Around", "img": "https://i.scdn.co/image/ab67616d0000b2730123cb16045fb48bf5e408ab"}, {"d": 32, "r": 57.0, "a": "Cream", "n": "Fresh Cream", "img": "https://i.scdn.co/image/ab67616d0000b27393a3bb62961a598ecaad1f75"}, {"d": 33, "r": 59.0, "a": "Cream", "n": "Disraeli Gears", "img": "https://i.scdn.co/image/ab67616d0000b273db1fb2dede292908e86d94d7"}, {"d": 34, "r": 61.0, "a": "John Mayall & the Bluesbreak", "n": "Blues Breakers with Eric Clapt", "img": "https://i.scdn.co/image/ab67616d0000b273c40ff56a16cebb8f30af1f66"}, {"d": 35, "r": 71.0, "a": "The Beach Boys", "n": "Pet Sounds", "img": "https://i.scdn.co/image/ab67616d0000b27350eb0c521d2d3b2f599bff04"}, {"d": 35, "r": 89.0, "a": "Aretha Franklin", "n": "I Never Loved a Man the Way I ", "img": "https://i.scdn.co/image/ab67616d0000b2736aa9314b7ddfbd8f036ba3ac"}, {"d": 35, "r": 81.0, "a": "Aretha Franklin", "n": "Lady Soul", "img": "https://i.scdn.co/image/ab67616d0000b2739e5af96086574b76499dcf70"}, {"d": 36, "r": 31.0, "a": "Jefferson Airplane", "n": "Surrealistic Pillow", "img": "https://i.scdn.co/image/ab67616d0000b2736a74089537c2dbd548c4a95e"}, {"d": 37, "r": 65.0, "a": "Love", "n": "Forever Changes", "img": "https://i.scdn.co/image/ab67616d0000b273bb01f0ca02c204d13933ca06"}, {"d": 37, "r": 81.0, "a": "Pink Floyd", "n": "Animals", "img": "https://i.scdn.co/image/ab67616d0000b273810168d54f85d48f07389237"}, {"d": 38, "r": 89.0, "a": "Pink Floyd", "n": "The Dark Side of the Moon", "img": "https://i.scdn.co/image/ab67616d0000b273ea7caaff71dea1051d49b2fe"}, {"d": 39, "r": 87.0, "a": "Pink Floyd", "n": "Wish You Were Here", "img": "https://i.scdn.co/image/ab67616d0000b2731a84d71391df7469c5ab8539"}, {"d": 40, "r": 71.0, "a": "Pink Floyd", "n": "The Wall", "img": "https://i.scdn.co/image/ab67616d0000b2735d48e2f56d691f9a4e4b0bdf"}, {"d": 41, "r": 57.0, "a": "Procol Harum", "n": "Procol Harum", "img": "https://i.scdn.co/image/ab67616d0000b273a6e109c57d5045046e6a211c"}, {"d": 42, "r": 73.0, "a": "The Doors", "n": "The Doors", "img": "https://i.scdn.co/image/ab67616d0000b2735b96a8c5d61be8878452f8f1"}, {"d": 43, "r": 74.0, "a": "The Jimi Hendrix Experience", "n": "Are You Experienced", "img": "https://i.scdn.co/image/ab67616d0000b273c9adfbd773852e286faed040"}, {"d": 44, "r": 79.0, "a": "The Jimi Hendrix Experience", "n": "Axis: Bold as Love", "img": "https://i.scdn.co/image/ab67616d0000b27319dcd95d28b63d10164327f2"}, {"d": 44, "r": 51.0, "a": "The Velvet Underground", "n": "The Velvet Underground & Nico", "img": "https://i.scdn.co/image/ab67616d0000b27398260c528e6eec9dd431c1d7"}, {"d": 44, "r": 68.0, "a": "Traffic", "n": "Mr. Fantasy", "img": "https://i.scdn.co/image/ab67616d0000b273607f5d1d15bdb8a450840ccf"}, {"d": 44, "r": 79.0, "a": "Blue Cheer", "n": "Vincebus Eruptum", "img": "https://i.scdn.co/image/ab67616d0000b273170e8ad451922a19cd3720fa"}, {"d": 44, "r": 75.0, "a": "Iron Butterfly", "n": "In-A-Gadda-Da-Vida", "img": "https://i.scdn.co/image/ab67616d0000b273df214eac062671ef30c7bb81"}, {"d": 45, "r": 61.0, "a": "Jethro Tull", "n": "This Was", "img": "https://i.scdn.co/image/ab67616d0000b2737c93f7c6762dcbcedfd1c23d"}, {"d": 45, "r": 66.0, "a": "Jethro Tull", "n": "Aqualung", "img": "https://i.scdn.co/image/ab67616d0000b273be6e758fe8300a72eceddb8f"}, {"d": 46, "r": 81.0, "a": "Steppenwolf", "n": "Steppenwolf", "img": "https://i.scdn.co/image/ab67616d0000b273e2aacda30b100cc33d523be0"}, {"d": 47, "r": 66.0, "a": "The Band", "n": "Music from Big Pink", "img": "https://i.scdn.co/image/ab67616d0000b27320bbceac6950d3fe13fa13c3"}, {"d": 48, "r": 65.0, "a": "The Rolling Stones", "n": "Beggars Banquet", "img": "https://i.scdn.co/image/ab67616d0000b27344934a06d21864415376f5f2"}, {"d": 49, "r": 76.0, "a": "The Rolling Stones", "n": "Let It Bleed", "img": "https://i.scdn.co/image/ab67616d0000b2732af30c881bb23cfb82a8cf99"}, {"d": 49, "r": 81.0, "a": "The Rolling Stones", "n": "Sticky Fingers", "img": "https://i.scdn.co/image/ab67616d0000b273a1d9c9969f2a7ed27e449a3c"}, {"d": 49, "r": 83.0, "a": "The Rolling Stones", "n": "Exile on Main St.", "img": "https://i.scdn.co/image/ab67616d0000b273ba42bfcfeed19018b1f8cab8"}, {"d": 50, "r": 68.0, "a": "The Zombies", "n": "Odessey and Oracle", "img": "https://i.scdn.co/image/ab67616d0000b2737b2d0b75d339c4994cb97b8d"}, {"d": 50, "r": 84.0, "a": "Blind Faith", "n": "Blind Faith", "img": "https://i.scdn.co/image/ab67616d0000b273a8e327d9ae533452ea8e613b"}, {"d": 51, "r": 89.0, "a": "Creedence Clearwater Revival", "n": "Bayou Country", "img": "https://i.scdn.co/image/ab67616d0000b2731afccd261170f1d8f3cadb3d"}, {"d": 51, "r": 92.0, "a": "Creedence Clearwater Revival", "n": "Willy and the Poor Boys", "img": "https://i.scdn.co/image/ab67616d0000b2739f39192f9f8ca1c90847b3e5"}, {"d": 52, "r": 78.0, "a": "Creedence Clearwater Revival", "n": "Green River", "img": "https://i.scdn.co/image/ab67616d0000b2739211527e858a142c4c7ec18a"}, {"d": 52, "r": 88.0, "a": "Creedence Clearwater Revival", "n": "Cosmo's Factory", "img": "https://i.scdn.co/image/ab67616d0000b2736e186edfb8fe3710fdc1f7c2"}, {"d": 52, "r": 52.0, "a": "Crosby, Stills & Nash", "n": "Crosby, Stills & Nash", "img": "https://i.scdn.co/image/ab67616d0000b273a32339b8818323380682a889"}, {"d": 52, "r": 91.0, "a": "Led Zeppelin", "n": "Led Zeppelin", "img": "https://i.scdn.co/image/ab67616d0000b2739046aeba4babbd4b7af77548"}, {"d": 53, "r": 86.0, "a": "Led Zeppelin", "n": "Led Zeppelin II", "img": "https://i.scdn.co/image/ab67616d0000b273a2bce1c979df5f4858c9bb59"}, {"d": 54, "r": 82.0, "a": "Led Zeppelin", "n": "Led Zeppelin III", "img": "https://i.scdn.co/image/ab67616d0000b27390a50cfe99a4c19ff3cbfbdb"}, {"d": 54, "r": 92.0, "a": "Led Zeppelin", "n": "Led Zeppelin IV", "img": "https://i.scdn.co/image/ab67616d0000b273c8a11e48c91a982d086afc69"}, {"d": 55, "r": 68.0, "a": "Led Zeppelin", "n": "Houses of the Holy", "img": "https://i.scdn.co/image/ab67616d0000b2731aa47e71c4edfeaddb65cd54"}, {"d": 56, "r": 93.0, "a": "Led Zeppelin", "n": "Physical Graffiti", "img": "https://i.scdn.co/image/ab67616d0000b273765b0617b572bdd1dbdc7d8e"}, {"d": 56, "r": 74.0, "a": "Led Zeppelin", "n": "Presence", "img": "https://i.scdn.co/image/ab67616d0000b27327f6c518a8e36d45b5e7d95e"}, {"d": 57, "r": 72.0, "a": "Led Zeppelin", "n": "In Through the Out Door", "img": "https://i.scdn.co/image/ab67616d0000b27315aa25b0b3b972a7be623605"}, {"d": 57, "r": 61.0, "a": "MC5", "n": "Kick Out the Jams", "img": "https://i.scdn.co/image/ab67616d0000b27336f68306b0c5babcd4235e45"}, {"d": 58, "r": 62.0, "a": "Santana", "n": "Santana", "img": "https://i.scdn.co/image/ab67616d0000b273930858249e7abbb9b5317929"}, {"d": 59, "r": 71.0, "a": "Santana", "n": "Abraxas", "img": "https://i.scdn.co/image/ab67616d0000b273f1594eeff2ea90e0f3873919"}, {"d": 60, "r": 74.0, "a": "Santana", "n": "Caravanserai", "img": "https://i.scdn.co/image/ab67616d0000b273800bb150ac0079c20c4f8a81"}, {"d": 61, "r": 75.0, "a": "Santana", "n": "Supernatural", "img": "https://i.scdn.co/image/ab67616d0000b27347eb3ea5a92904c19e102e54"}, {"d": 62, "r": 61.0, "a": "The Stooges", "n": "The Stooges", "img": "https://i.scdn.co/image/ab67616d0000b273002d4aa00a80e1be587cef7e"}, {"d": 63, "r": 66.0, "a": "The Stooges", "n": "Fun House", "img": "https://i.scdn.co/image/ab67616d0000b27313aa419336db598eb2674b1a"}, {"d": 64, "r": 55.0, "a": "The Stooges", "n": "Raw Power", "img": "https://i.scdn.co/image/ab67616d0000b273e104d8b88560f7c3c84eb129"}, {"d": 65, "r": 82.0, "a": "Black Sabbath", "n": "Paranoid", "img": "https://i.scdn.co/image/ab67616d0000b273d5fccf9ce08b6a1e7d12a222"}, {"d": 66, "r": 84.0, "a": "Black Sabbath", "n": "Master of Reality", "img": "https://i.scdn.co/image/ab67616d0000b273c199494ba9ea2b73e9208f91"}, {"d": 67, "r": 78.0, "a": "Black Sabbath", "n": "Heaven and Hell", "img": "https://i.scdn.co/image/ab67616d0000b273eab13a1a01fb57d6e9e8ddaf"}, {"d": 68, "r": 71.0, "a": "David Bowie", "n": "The Man Who Sold the World", "img": "https://i.scdn.co/image/ab67616d0000b27346926e777bd6665f03128d29"}, {"d": 69, "r": 76.0, "a": "David Bowie", "n": "The Rise and Fall of Ziggy Sta", "img": "https://i.scdn.co/image/ab67616d0000b273c41f4e1133b0e6c5fcf58680"}, {"d": 70, "r": 42.0, "a": "David Bowie", "n": "Blackstar", "img": "https://i.scdn.co/image/ab67616d0000b273cf871ddf9d67bbdeb0ac6a1a"}, {"d": 71, "r": 68.0, "a": "Derek and the Dominos", "n": "Layla and Other Assorted Love ", "img": "https://i.scdn.co/image/ab67616d0000b273fbcaf7402f38faac27610efc"}, {"d": 72, "r": 78.0, "a": "Funkadelic", "n": "Maggot Brain", "img": "https://i.scdn.co/image/ab67616d0000b27352573463beeda67fe242cab5"}, {"d": 73, "r": 43.0, "a": "Joni Mitchell", "n": "Blue", "img": "https://i.scdn.co/image/ab67616d0000b273e79dc1438d650f426b5e99a7"}, {"d": 74, "r": 79.0, "a": "Marvin Gaye", "n": "What\u2019s Going On", "img": "https://i.scdn.co/image/ab67616d0000b2738b6f477c1d243e678b9f56d7"}, {"d": 75, "r": 65.0, "a": "Sly and the Family Stone", "n": "There's a Riot Goin' On", "img": "https://i.scdn.co/image/ab67616d0000b273de0391ae05929bfe0e952f6b"}, {"d": 76, "r": 66.0, "a": "T. Rex", "n": "Electric Warrior", "img": "https://i.scdn.co/image/ab67616d0000b2737762663eeab308df9d240cd0"}, {"d": 77, "r": 74.0, "a": "Al Green", "n": "Let\u2019s Stay Together", "img": "https://i.scdn.co/image/ab67616d0000b273a1fc113a6858d0824d9aaf38"}, {"d": 78, "r": 72.0, "a": "Big Star", "n": "#1 Record", "img": "https://i.scdn.co/image/ab67616d0000b273ece578a226806ad05af7a03d"}, {"d": 79, "r": 71.0, "a": "Curtis Mayfield", "n": "Super Fly", "img": "https://i.scdn.co/image/ab67616d0000b273532e0956a0f5ae7418c63ceb"}, {"d": 80, "r": 81.0, "a": "Deep Purple", "n": "Machine Head", "img": "https://i.scdn.co/image/ab67616d0000b273bc9b44e950d5440ff65ea926"}, {"d": 81, "r": 76.0, "a": "Lou Reed", "n": "Transformer", "img": "https://i.scdn.co/image/ab67616d0000b273d55149748dca0e5a1f40778e"}, {"d": 82, "r": 67.0, "a": "Lou Reed", "n": "New York", "img": "https://i.scdn.co/image/ab67616d0000b2736386bf63d1326306c9b168ef"}, {"d": 83, "r": 64.0, "a": "The Allman Brothers Band", "n": "Eat a Peach", "img": "https://i.scdn.co/image/ab67616d0000b273ce7530248d37fcdb86948b61"}, {"d": 84, "r": 63.0, "a": "The Allman Brothers Band", "n": "Brothers and Sisters", "img": "https://i.scdn.co/image/ab67616d0000b273b242474ac9698d4369e0442e"}, {"d": 84, "r": 56.0, "a": "King Crimson", "n": "Larks' Tongues in Aspic", "img": "https://i.scdn.co/image/ab67616d0000b273aa9e5286056e17ff3d9b2881"}, {"d": 84, "r": 81.0, "a": "Lynyrd Skynyrd", "n": "Pronounced \u2018L\u0115h-\u2018n\u00e9rd \u2018Skin-\u2018n", "img": "https://i.scdn.co/image/ab67616d0000b273128450651c9f0442780d8eb8"}, {"d": 85, "r": 82.0, "a": "Lynyrd Skynyrd", "n": "Second Helping", "img": "https://i.scdn.co/image/ab67616d0000b27317e1907923e91181f38290ac"}, {"d": 86, "r": 73.0, "a": "New York Dolls", "n": "New York Dolls", "img": "https://i.scdn.co/image/ab67616d0000b273802255bd535533c0e2ba5ad2"}, {"d": 87, "r": 86.0, "a": "Stevie Wonder", "n": "Innervisions", "img": "https://i.scdn.co/image/ab67616d0000b273ea8ab1a548312b79ac955266"}, {"d": 88, "r": 88.0, "a": "Stevie Wonder", "n": "Songs in the Key of Life", "img": "https://i.scdn.co/image/ab67616d0000b2732fee61bfec596bb6f5447c50"}, {"d": 89, "r": 63.0, "a": "Queen", "n": "Queen II", "img": "https://i.scdn.co/image/ab67616d0000b273dcf482c792ef848d7a994fd5"}, {"d": 90, "r": 68.0, "a": "Queen", "n": "Sheer Heart Attack", "img": "https://i.scdn.co/image/ab67616d0000b27359998815d706661e2c404d9f"}, {"d": 91, "r": 76.0, "a": "Queen", "n": "A Night at the Opera", "img": "https://i.scdn.co/image/ab67616d0000b273ce4f1737bc8a646c8c4bd25a"}, {"d": 92, "r": 77.0, "a": "Rory Gallagher", "n": "Rory Gallagher", "img": "https://i.scdn.co/image/ab67616d0000b2731b6bd3cc10f42a536921c008"}, {"d": 92, "r": 69.0, "a": "Steely Dan", "n": "Pretzel Logic", "img": "https://i.scdn.co/image/ab67616d0000b273120746a40f65d11c2ac29647"}, {"d": 93, "r": 78.0, "a": "Aerosmith", "n": "Get Your Wings", "img": "https://i.scdn.co/image/ab67616d0000b273263ba11563649efef10f7642"}, {"d": 93, "r": 88.0, "a": "Aerosmith", "n": "Toys in the Attic", "img": "https://i.scdn.co/image/ab67616d0000b2738cffbbb7fe8645a486a85ea9"}, {"d": 93, "r": 95.0, "a": "Aerosmith", "n": "Rocks", "img": "https://i.scdn.co/image/ab67616d0000b273763da84add664535b418ffb7"}, {"d": 94, "r": 71.0, "a": "Aerosmith", "n": "Draw the Line", "img": "https://i.scdn.co/image/ab67616d0000b2736a025154c73c41e501813d59"}, {"d": 94, "r": 72.0, "a": "Aerosmith", "n": "Night in the Ruts", "img": "https://i.scdn.co/image/ab67616d0000b2733bd247df2f32af67828e5369"}, {"d": 94, "r": 82.0, "a": "Aerosmith", "n": "Permanent Vacation", "img": "https://i.scdn.co/image/ab67616d0000b273a8a965df6a845b265ee19106"}, {"d": 95, "r": 94.0, "a": "Aerosmith", "n": "Pump", "img": "https://i.scdn.co/image/ab67616d0000b2737286808a6e05a3c35d100db6"}, {"d": 95, "r": 92.0, "a": "Aerosmith", "n": "Get a Grip", "img": "https://i.scdn.co/image/ab67616d0000b27391b246743456e285a20a46ed"}, {"d": 96, "r": 76.0, "a": "Bruce Springsteen", "n": "Born to Run", "img": "https://i.scdn.co/image/ab67616d0000b273503143a281a3f30268dcd9f9"}, {"d": 96, "r": 86.0, "a": "Bruce Springsteen", "n": "Born in the U.S.A.", "img": "https://i.scdn.co/image/ab67616d0000b273a7865e686c36a4adda6c9978"}, {"d": 96, "r": 74.0, "a": "Jeff Beck", "n": "Blow by Blow", "img": "https://i.scdn.co/image/ab67616d0000b2733ed60b59aaa75ed572d7fc30"}, {"d": 96, "r": 58.0, "a": "Patti Smith", "n": "Horses", "img": "https://i.scdn.co/image/ab67616d0000b273770198dcbd8d97b29e99b621"}, {"d": 97, "r": 71.0, "a": "Ramones", "n": "Ramones", "img": "https://i.scdn.co/image/ab67616d0000b273db687db0afb257abdee10816"}, {"d": 97, "r": 69.0, "a": "Ramones", "n": "Rocket to Russia", "img": "https://i.scdn.co/image/ab67616d0000b2737ed5367900f7596d7c14345a"}, {"d": 97, "r": 65.0, "a": "Ramones", "n": "Road to Ruin", "img": "https://i.scdn.co/image/ab67616d0000b273072ee11a51e23f861c54cef9"}, {"d": 97, "r": 93.0, "a": "Billy Joel", "n": "The Stranger", "img": "https://i.scdn.co/image/ab67616d0000b2736ce61113662ecf693b605ee5"}, {"d": 97, "r": 86.0, "a": "Billy Joel", "n": "An Innocent Man", "img": "https://i.scdn.co/image/ab67616d0000b273814cbc4746358a25c84c62e7"}, {"d": 97, "r": 78.0, "a": "Billy Joel", "n": "52nd Street", "img": "https://i.scdn.co/image/ab67616d0000b2731d4675d5a0345bb93686e4b6"}, {"d": 98, "r": 67.0, "a": "Bob Marley and the Wailers", "n": "Exodus", "img": "https://i.scdn.co/image/ab67616d0000b273d7f3e4d143c198d3542a775d"}, {"d": 98, "r": 66.0, "a": "Bob Marley and the Wailers", "n": "Survival", "img": "https://i.scdn.co/image/ab67616d0000b2735c15cf8bfc892d27aecf2f6d"}, {"d": 99, "r": 59.0, "a": "Fleetwood Mac", "n": "Rumours", "img": "https://i.scdn.co/image/ab67616d0000b27357df7ce0eac715cf70e519a7"}, {"d": 99, "r": 43.0, "a": "Fleetwood Mac", "n": "Tusk", "img": "https://i.scdn.co/image/ab67616d0000b273d46213c0dd0b032092ea6db3"}, {"d": 99, "r": 92.0, "a": "Sex Pistols", "n": "Never Mind the Bollocks", "img": "https://i.scdn.co/image/ab67616d0000b273d0f19de33459c832e50d6ecd"}, {"d": 100, "r": 78.0, "a": "Talking Heads", "n": "Remain in Light", "img": "https://i.scdn.co/image/ab67616d0000b273e56fa8c916dc6ce419dcf557"}, {"d": 100, "r": 72.0, "a": "The Clash", "n": "The Clash", "img": "https://i.scdn.co/image/ab67616d0000b27346db502388d44edb43ebb261"}, {"d": 100, "r": 74.0, "a": "The Clash", "n": "Give 'Em Enough Rope", "img": "https://i.scdn.co/image/ab67616d0000b2736b32a59fcc8bcd8172bd54d6"}, {"d": 100, "r": 81.0, "a": "AC/DC", "n": "Powerage", "img": "https://i.scdn.co/image/ab67616d0000b2733bf8d1987a42dd781a8039de"}, {"d": 100, "r": 84.0, "a": "AC/DC", "n": "Highway to Hell", "img": "https://i.scdn.co/image/ab67616d0000b27351c02a77d09dfcd53c8676d0"}, {"d": 101, "r": 88.0, "a": "AC/DC", "n": "Back in Black", "img": "https://i.scdn.co/image/ab67616d0000b2730b51f8d91f3a21e8426361ae"}, {"d": 101, "r": 67.0, "a": "Blondie", "n": "Parallel Lines", "img": "https://i.scdn.co/image/ab67616d0000b273ace2bedb8e6cfa04207d5c0f"}, {"d": 102, "r": 68.0, "a": "Eric Clapton", "n": "Backless", "img": "https://i.scdn.co/image/ab67616d0000b2732322f8dd87a4ca6cd3a70ba9"}, {"d": 102, "r": 74.0, "a": "Eric Clapton", "n": "From the Cradle", "img": "https://i.scdn.co/image/ab67616d0000b2734dad5185012ffec379ce0cf7"}, {"d": 103, "r": 46.0, "a": "Siouxsie and the Banshees", "n": "The Scream", "img": "https://i.scdn.co/image/ab67616d0000b273cb4e1c73374d57fb79cba06f"}, {"d": 103, "r": 71.0, "a": "Television", "n": "Marquee Moon", "img": "https://i.scdn.co/image/ab67616d0000b27318b36d985b0ae01163ca9cf6"}, {"d": 103, "r": 81.0, "a": "The Cars", "n": "The Cars", "img": "https://i.scdn.co/image/ab67616d0000b273f725bc7907dcf15aa2c6e7b7"}, {"d": 104, "r": 58.0, "a": "The Jam", "n": "All Mod Cons", "img": "https://i.scdn.co/image/ab67616d0000b2738b15591301a89f378944342b"}, {"d": 104, "r": 52.0, "a": "The Police", "n": "Outlandos d'Amour", "img": "https://i.scdn.co/image/ab67616d0000b2732043dd3544a339547d04b436"}, {"d": 105, "r": 58.0, "a": "The Police", "n": "Reggatta de Blanc", "img": "https://i.scdn.co/image/ab67616d0000b2738ec81cc654b45ade8bdf1486"}, {"d": 105, "r": 68.0, "a": "The Police", "n": "Synchronicity", "img": "https://i.scdn.co/image/ab67616d0000b273c8e97cafeb2acb85b21a777e"}, {"d": 106, "r": 81.0, "a": "Van Halen", "n": "Van Halen", "img": "https://i.scdn.co/image/ab67616d0000b27317dd812df38fed44d6d2036e"}, {"d": 106, "r": 74.0, "a": "Van Halen", "n": "Van Halen II", "img": "https://i.scdn.co/image/ab67616d0000b273f09b618bc81755c0d817bd20"}, {"d": 107, "r": 68.0, "a": "Van Halen", "n": "Women and Children First", "img": "https://i.scdn.co/image/ab67616d0000b273407b86c2aeb293ba57f61d92"}, {"d": 107, "r": 71.0, "a": "Van Halen", "n": "1984", "img": "https://i.scdn.co/image/ab67616d0000b273b414c63fb435b622238c15ed"}, {"d": 107, "r": 36.0, "a": "Joy Division", "n": "Unknown Pleasures", "img": "https://i.scdn.co/image/ab67616d0000b27316eb1e685e6bd37ab3228de6"}, {"d": 108, "r": 68.0, "a": "Cheap Trick", "n": "Dream Police", "img": "https://i.scdn.co/image/ab67616d0000b273c949b51fd9f906aa69757698"}, {"d": 108, "r": 38.0, "a": "Joy Division", "n": "Closer", "img": "https://i.scdn.co/image/ab67616d0000b27321590ea36e6264a1917d02eb"}, {"d": 108, "r": 78.0, "a": "Scorpions", "n": "Blackout", "img": "https://i.scdn.co/image/ab67616d0000b2730b0fbaf16e4475ad616b41b8"}, {"d": 109, "r": 78.0, "a": "Judas Priest", "n": "British Steel", "img": "https://i.scdn.co/image/ab67616d0000b273be0e5ebab8c61469b1ff9f62"}, {"d": 109, "r": 79.0, "a": "Judas Priest", "n": "Screaming for Vengeance", "img": "https://i.scdn.co/image/ab67616d0000b273475bd4fb40ba687fbf002c82"}, {"d": 110, "r": 68.0, "a": "The Specials", "n": "The Specials", "img": "https://i.scdn.co/image/ab67616d0000b273675b974d0ada890c41804e99"}, {"d": 110, "r": 74.0, "a": "Rush", "n": "Moving Pictures", "img": "https://i.scdn.co/image/ab67616d0000b27372833c1ae3343cbfb4617073"}, {"d": 111, "r": 73.0, "a": "Michael Jackson", "n": "Off the Wall", "img": "https://i.scdn.co/image/ab67616d0000b2737027294551db4fda68b5ddac"}, {"d": 111, "r": 82.0, "a": "Whitney Houston", "n": "Whitney Houston", "img": "https://i.scdn.co/image/ab67616d0000b2739015296f9afabfc102989521"}, {"d": 111, "r": 79.0, "a": "Dire Straits", "n": "Making Movies", "img": "https://i.scdn.co/image/ab67616d0000b2735b5e5240a4c483b5fb9f2cb0"}, {"d": 111, "r": 78.0, "a": "Dire Straits", "n": "Love Over Gold", "img": "https://i.scdn.co/image/ab67616d0000b2736eb1486e037eba0ff701df77"}, {"d": 111, "r": 82.0, "a": "Grandmaster Flash and the Fu", "n": "The Message", "img": "https://i.scdn.co/image/ab67616d0000b273798575ed938d0968a00ce887"}, {"d": 111, "r": 88.0, "a": "Bon Jovi", "n": "Slippery When Wet", "img": "https://i.scdn.co/image/ab67616d0000b2731336b31b6a1799f0de5807ac"}, {"d": 111, "r": 76.0, "a": "Dire Straits", "n": "Brothers in Arms", "img": "https://i.scdn.co/image/ab67616d0000b273fb995d2871f084b34afae3b3"}, {"d": 112, "r": 76.0, "a": "Michael Jackson", "n": "Thriller", "img": "https://i.scdn.co/image/ab67616d0000b273de437d960dda1ac0a3586d97"}, {"d": 112, "r": 74.0, "a": "Lionel Richie", "n": "Can\u2019t Slow Down", "img": "https://i.scdn.co/image/ab67616d0000b2737ebe4ccb79ca0dc76356b9bb"}, {"d": 112, "r": 74.0, "a": "Bon Jovi", "n": "New Jersey", "img": "https://i.scdn.co/image/ab67616d0000b273901d0116a03d30a5c45bb99c"}, {"d": 113, "r": 78.0, "a": "Def Leppard", "n": "High \u2019n\u2019 Dry", "img": "https://i.scdn.co/image/ab67616d0000b2739b5694de012399bf6a7042ea"}, {"d": 114, "r": 86.0, "a": "Def Leppard", "n": "Pyromania", "img": "https://i.scdn.co/image/ab67616d0000b273e45161990e83649071399525"}, {"d": 115, "r": 86.0, "a": "Def Leppard", "n": "Hysteria", "img": "https://i.scdn.co/image/ab67616d0000b27343511b8c20112757edddc7ba"}, {"d": 116, "r": 75.0, "a": "Iron Maiden", "n": "Killers", "img": "https://i.scdn.co/image/ab67616d0000b27356868e786f20e9ed1389f1c2"}, {"d": 116, "r": 75.0, "a": "Iron Maiden", "n": "The Number of the Beast", "img": "https://i.scdn.co/image/ab67616d0000b2730910e39b1092e8ec44626aa3"}, {"d": 117, "r": 82.0, "a": "Billy Idol", "n": "Billy Idol", "img": "https://i.scdn.co/image/ab67616d0000b273a20464e6697dc1149d3a5cdc"}, {"d": 117, "r": 57.0, "a": "Prince", "n": "1999", "img": "https://i.scdn.co/image/ab67616d0000b273337c5517a9a62e0c3f17d59f"}, {"d": 118, "r": 82.0, "a": "Prince", "n": "Purple Rain", "img": "https://i.scdn.co/image/ab67616d0000b2738a2ce3f148f57584269c3782"}, {"d": 119, "r": 76.0, "a": "Prince", "n": "Sign o' the Times", "img": "https://i.scdn.co/image/ab67616d0000b2730f15bc9fc5979caf46be6205"}, {"d": 120, "r": 82.0, "a": "Metallica", "n": "Kill \u2019Em All", "img": "https://i.scdn.co/image/ab67616d0000b27320292e6cce666a69ba5a86fb"}, {"d": 121, "r": 82.0, "a": "Metallica", "n": "Master of Puppets", "img": "https://i.scdn.co/image/ab67616d0000b273cad4832cb7b5844343278daa"}, {"d": 122, "r": 79.0, "a": "Metallica", "n": "\u2026And Justice for All", "img": "https://i.scdn.co/image/ab67616d0000b273be54746b374358970b5e617a"}, {"d": 123, "r": 91.0, "a": "Metallica", "n": "Metallica (\"The Black Album\")", "img": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRqQH19o2FohA7sCiW4eZW-otGdrCzp8TZyQ310peFgzp8di1x2dkfThF-M9yL3"}, {"d": 123, "r": 63.0, "a": "Minor Threat", "n": "Out of Step", "img": "https://i.scdn.co/image/ab67616d0000b273986f510529bc1c241a7c55da"}, {"d": 124, "r": 72.0, "a": "M\u00f6tley Cr\u00fce", "n": "Shout at the Devil", "img": "https://i.scdn.co/image/ab67616d0000b2732f7e38911ef0288105f6a1e6"}, {"d": 125, "r": 57.0, "a": "R.E.M.", "n": "Murmur", "img": "https://i.scdn.co/image/ab67616d0000b273fe05afa9ef05c2ba87e0e860"}, {"d": 125, "r": 59.0, "a": "R.E.M.", "n": "Out of Time", "img": "https://i.scdn.co/image/ab67616d0000b273e2dd4e821bcc3f70dc0c8ffd"}, {"d": 126, "r": 72.0, "a": "R.E.M.", "n": "Automatic for the People", "img": "https://i.scdn.co/image/ab67616d0000b273ace3e7aae0b7c78bbe1c4f35"}, {"d": 126, "r": 82.0, "a": "Stevie Ray Vaughan", "n": "Texas Flood", "img": "https://i.scdn.co/image/ab67616d0000b273f7143c00741b94bb62025340"}, {"d": 126, "r": 79.0, "a": "Stevie Ray Vaughan", "n": "Couldn't Stand the Weather", "img": "https://i.scdn.co/image/ab67616d0000b273eb72e98b6e645a68cdfe72a4"}, {"d": 127, "r": 76.0, "a": "U2", "n": "War", "img": "https://i.scdn.co/image/ab67616d0000b273673526fcf35ab235e1a9d94c"}, {"d": 128, "r": 81.0, "a": "U2", "n": "The Joshua Tree", "img": "https://i.scdn.co/image/ab67616d0000b273b7bea3d01f04e6d0408d2afe"}, {"d": 129, "r": 77.0, "a": "U2", "n": "Achtung Baby", "img": "https://i.scdn.co/image/ab67616d0000b27337cd18af5725b9cad0a5ab53"}, {"d": 129, "r": 67.0, "a": "Madonna", "n": "Like a Virgin", "img": "https://i.scdn.co/image/ab67616d0000b27399d424b0873a9a714279a9f3"}, {"d": 130, "r": 62.0, "a": "Run-D.M.C.", "n": "Run-D.M.C.", "img": "https://i.scdn.co/image/ab67616d0000b273cb5fb938d28c96cf5b8dadc9"}, {"d": 131, "r": 48.0, "a": "The Replacements", "n": "Let It Be ", "img": "https://i.scdn.co/image/ab67616d0000b273008cfa8fb96ef0befcbc615a"}, {"d": 132, "r": 42.0, "a": "The Smiths", "n": "The Smiths", "img": "https://i.scdn.co/image/ab67616d0000b273a09b231129ab1cb1a6efc57f"}, {"d": 132, "r": 45.0, "a": "The Smiths", "n": "The Queen Is Dead", "img": "https://i.scdn.co/image/ab67616d0000b273ada101c2e9e97feb8fae37a9"}, {"d": 133, "r": 68.0, "a": "Yngwie Malmsteen", "n": "Rising Force", "img": "https://i.scdn.co/image/ab67616d0000b273bacbe43192f35e9a941557c6"}, {"d": 134, "r": 71.0, "a": "Kate Bush", "n": "Hounds of Love", "img": "https://i.scdn.co/image/ab67616d0000b273ad08f4b38efbff0c0da0f252"}, {"d": 134, "r": 78.0, "a": "Phil Collins", "n": "No Jacket Required", "img": "https://i.scdn.co/image/ab67616d0000b273441084621edb7c53ef303090"}, {"d": 135, "r": 81.0, "a": "Tears for Fears", "n": "Songs from the Big Chair", "img": "https://i.scdn.co/image/ab67616d0000b27322463d6939fec9e17b2a6235"}, {"d": 135, "r": 61.0, "a": "The Cult", "n": "Love", "img": "https://i.scdn.co/image/ab67616d0000b273bafa4476c5adb4741beb80fb"}, {"d": 135, "r": 82.0, "a": "The Cure", "n": "The Head on the Door", "img": "https://i.scdn.co/image/ab67616d0000b27396e854c582f5213d51793cc2"}, {"d": 135, "r": 76.0, "a": "The Cure", "n": "Disintegration", "img": "https://i.scdn.co/image/ab67616d0000b2735eaaa770d39591fd91b2b03b"}, {"d": 136, "r": 71.0, "a": "Tom Petty & the Heartbreaker", "n": "Southern Accents", "img": "https://i.scdn.co/image/ab67616d0000b273e4ecf4545405fb61706db860"}, {"d": 136, "r": 73.0, "a": "Beastie Boys", "n": "Licensed to Ill", "img": "https://i.scdn.co/image/ab67616d0000b273a7ea08ab3914c5fb2084a8ac"}, {"d": 137, "r": 71.0, "a": "Beastie Boys", "n": "Paul\u2019s Boutique", "img": "https://i.scdn.co/image/ab67616d0000b2732288f4cd4bf3a8764624a0d2"}, {"d": 138, "r": 77.0, "a": "Beastie Boys", "n": "Hello Nasty", "img": "https://i.scdn.co/image/ab67616d0000b273ab1d7b56d97842315dd0fdaa"}, {"d": 138, "r": 78.0, "a": "Bruce Hornsby and the Range", "n": "The Way It Is", "img": "https://i.scdn.co/image/ab67616d0000b273d09471f20a2104b865b19793"}, {"d": 138, "r": 68.0, "a": "Megadeth", "n": "Peace Sells\u2026 but Who\u2019s Buying?", "img": "https://i.scdn.co/image/ab67616d0000b2738fc06398d8852596d4981252"}, {"d": 139, "r": 78.0, "a": "Paul Simon", "n": "Graceland", "img": "https://i.scdn.co/image/ab67616d0000b27309880a7b8636c5a0615dc0c8"}, {"d": 139, "r": 48.0, "a": "Slayer", "n": "Reign in Blood", "img": "https://i.scdn.co/image/ab67616d0000b2731530f31c8d4197777b70ee5d"}, {"d": 140, "r": 61.0, "a": "Peter Gabriel", "n": "So", "img": "https://i.scdn.co/image/ab67616d0000b273cd877891b23a92b1a89e60b5"}, {"d": 140, "r": 72.0, "a": "Phil Collins", "n": "Face Value", "img": "https://i.scdn.co/image/ab67616d0000b27328db834368898aa448ea6200"}, {"d": 140, "r": 77.0, "a": "Phil Collins", "n": "Hello, I Must Be Going!", "img": "https://i.scdn.co/image/ab67616d0000b2738f6a72470fc5c0d26a4f614a"}, {"d": 140, "r": 72.0, "a": "Whitney Houston", "n": "I\u2019m Your Baby Tonight", "img": "https://i.scdn.co/image/ab67616d0000b27302dffd583e3bc8eff1ad471b"}, {"d": 140, "r": 84.0, "a": "Guns N' Roses", "n": "Appetite for Destruction", "img": "https://i.scdn.co/image/ab67616d0000b27321ebf49b3292c3f0f575f0f5"}, {"d": 141, "r": 62.0, "a": "Jason Becker", "n": "Perpetual Burn", "img": "https://i.scdn.co/image/ab67616d0000b273f37eedaf4dd6dcc9c2fa4ab5"}, {"d": 142, "r": 22.0, "a": "Sonic Youth", "n": "EVOL", "img": "https://i.scdn.co/image/ab67616d0000b273272b5e233006c97ac493334c"}, {"d": 142, "r": 47.0, "a": "Sonic Youth", "n": "Daydream Nation", "img": "https://i.scdn.co/image/ab67616d0000b27320f51363b9e2cbd207f158ba"}, {"d": 142, "r": 49.0, "a": "Eric B. & Rakim", "n": "Paid in Full", "img": "https://i.scdn.co/image/ab67616d0000b273d9a71c225d94b8cb6638bb91"}, {"d": 143, "r": 61.0, "a": "George Michael", "n": "Faith", "img": "https://i.scdn.co/image/ab67616d0000b273b7a9a6a2bf311630d3fc6956"}, {"d": 144, "r": 65.0, "a": "Joe Satriani", "n": "Surfing with the Alien", "img": "https://i.scdn.co/image/ab67616d0000b27373dd51cf8328c824f38919e6"}, {"d": 144, "r": 68.0, "a": "Bobby Brown", "n": "Don\u2019t Be Cruel", "img": "https://i.scdn.co/image/ab67616d0000b27353cf43170dc29787984cf6b4"}, {"d": 144, "r": 78.0, "a": "Living Colour", "n": "Vivid", "img": "https://i.scdn.co/image/ab67616d0000b27386936806798500ce95783a39"}, {"d": 145, "r": 72.0, "a": "N.W.A.", "n": "Straight Outta Compton", "img": "https://i.scdn.co/image/ab67616d0000b273c79a70e8167cc1a4fab83781"}, {"d": 145, "r": 62.0, "a": "Paula Abdul", "n": "Forever Your Girl", "img": "https://i.scdn.co/image/ab67616d0000b273cb3cea7439a97660b3aedb8c"}, {"d": 146, "r": 62.0, "a": "Public Enemy", "n": "It Takes a Nation of Millions ", "img": "https://i.scdn.co/image/ab67616d0000b273c3cb4969e8a8e9c9d604bf89"}, {"d": 147, "r": 66.0, "a": "Soul Asylum", "n": "Hang Time", "img": "https://i.scdn.co/image/ab67616d0000b2734c1abf999b4447fa07067990"}, {"d": 148, "r": 72.0, "a": "De La Soul", "n": "3 Feet High and Rising", "img": "https://i.scdn.co/image/ab67616d0000b273fa8d314f6f91e81889335dfc"}, {"d": 148, "r": 76.0, "a": "Faith No More", "n": "The Real Thing", "img": "https://i.scdn.co/image/ab67616d0000b273e081ef6de656ee714788ea0d"}, {"d": 149, "r": 62.0, "a": "Janet Jackson", "n": "Rhythm Nation 1814", "img": "https://i.scdn.co/image/ab67616d0000b27371511473d9e34fcdc13d90ef"}, {"d": 150, "r": 58.0, "a": "Janet Jackson", "n": "Janet.", "img": "https://i.scdn.co/image/ab67616d0000b273e63518d50aff63f57d2b8ead"}, {"d": 151, "r": 68.0, "a": "Nine Inch Nails", "n": "Pretty Hate Machine", "img": "https://i.scdn.co/image/ab67616d0000b2739764c0993e45db213f0e359f"}, {"d": 152, "r": 65.0, "a": "Nine Inch Nails", "n": "The Downward Spiral", "img": "https://i.scdn.co/image/ab67616d0000b2734078c255069c0e7a2553fa4a"}, {"d": 153, "r": 76.0, "a": "Nirvana", "n": "Bleach", "img": "https://i.scdn.co/image/ab67616d0000b27397507fd22fb690cb9085a864"}, {"d": 154, "r": 95.0, "a": "Nirvana", "n": "Nevermind", "img": "https://i.scdn.co/image/ab67616d0000b273e175a19e530c898d167d39bf"}, {"d": 155, "r": 81.0, "a": "Nirvana", "n": "In Utero", "img": "https://i.scdn.co/image/ab67616d0000b273aca059cebc1841277db22d1c"}, {"d": 156, "r": 71.0, "a": "Pixies", "n": "Doolittle", "img": "https://i.scdn.co/image/ab67616d0000b2730ab3c2a306c614fae36ff1d6"}, {"d": 157, "r": 82.0, "a": "Richard Marx", "n": "Repeat Offender", "img": "https://i.scdn.co/image/ab67616d0000b273edc27582d8f5c3a7c56893bf"}, {"d": 158, "r": 83.0, "a": "Soundgarden", "n": "Louder Than Love", "img": "https://i.scdn.co/image/ab67616d0000b2734afd3baacb2653eff44f640a"}, {"d": 159, "r": 90.0, "a": "Soundgarden", "n": "Badmotorfinger", "img": "https://i.scdn.co/image/ab67616d0000b27386ea45263405a29c7f433d3d"}, {"d": 160, "r": 92.0, "a": "Soundgarden", "n": "Superunknown", "img": "https://i.scdn.co/image/ab67616d0000b273ae6d8e36136353d550b2587d"}, {"d": 161, "r": 62.0, "a": "The Stone Roses", "n": "The Stone Roses", "img": "https://i.scdn.co/image/ab67616d0000b273cf1f6466a493eb73d6d9d280"}, {"d": 162, "r": 68.0, "a": "Depeche Mode", "n": "Violator", "img": "https://i.scdn.co/image/ab67616d0000b273234bbbad4dce31cd2950af3e"}, {"d": 163, "r": 83.0, "a": "Eric Johnson", "n": "Ah Via Musicom", "img": "https://i.scdn.co/image/ab67616d0000b27351136aeb3f6b077a3f9d9a0f"}, {"d": 164, "r": 90.0, "a": "Gary Moore", "n": "Still Got the Blues", "img": "https://i.scdn.co/image/ab67616d0000b273b586fc87d8bde3ba953f233a"}, {"d": 165, "r": 51.0, "a": "Jane\u2019s Addiction", "n": "Ritual de lo Habitual", "img": "https://i.scdn.co/image/ab67616d0000b27380c8257f3e17780ea2a4bab0"}, {"d": 165, "r": 72.0, "a": "Pantera", "n": "Cowboys from Hell", "img": "https://i.scdn.co/image/ab67616d0000b2730ce52f4ba340a1e459e6a978"}, {"d": 166, "r": 56.0, "a": "Pantera", "n": "Vulgar Display of Power", "img": "https://i.scdn.co/image/ab67616d0000b273347c0a40c1e3f0c890a6d9d6"}, {"d": 166, "r": 66.0, "a": "Steve Vai", "n": "Passion and Warfare", "img": "https://i.scdn.co/image/ab67616d0000b273c64cc8bd8c3f931eee69c6ca"}, {"d": 166, "r": 76.0, "a": "A Tribe Called Quest", "n": "The Low End Theory", "img": "https://i.scdn.co/image/ab67616d0000b273f38c6b37a21334e22005b1f7"}, {"d": 167, "r": 78.0, "a": "A Tribe Called Quest", "n": "Midnight Marauders", "img": "https://i.scdn.co/image/ab67616d0000b273f306af1dae08f81f9d6f1f9f"}, {"d": 168, "r": 61.0, "a": "Massive Attack", "n": "Blue Lines", "img": "https://i.scdn.co/image/ab67616d0000b273af5beb00d940f5ede452d6b5"}, {"d": 169, "r": 71.0, "a": "My Bloody Valentine", "n": "Loveless", "img": "https://i.scdn.co/image/ab67616d0000b2730ede770070357575bc050511"}, {"d": 170, "r": 98.0, "a": "Pearl Jam", "n": "Ten", "img": "https://i.scdn.co/image/ab67616d0000b273d400d27cba05bb0545533864"}, {"d": 171, "r": 97.0, "a": "Pearl Jam", "n": "Vs.", "img": "https://i.scdn.co/image/ab67616d0000b273777344aba9d5b5785b4593a5"}, {"d": 172, "r": 85.0, "a": "Red Hot Chili Peppers", "n": "Blood Sugar Sex Magik", "img": "https://i.scdn.co/image/ab67616d0000b273153d79816d853f2694b2cc70"}, {"d": 173, "r": 74.0, "a": "Red Hot Chili Peppers", "n": "By the Way", "img": "https://i.scdn.co/image/ab67616d0000b273de1af2785a83cc660155a0c4"}, {"d": 174, "r": 76.0, "a": "Alice in Chains", "n": "Dirt", "img": "https://i.scdn.co/image/ab67616d0000b2731cd131e5e9ad887ad8c1ecb7"}, {"d": 174, "r": 68.0, "a": "Blind Melon", "n": "Blind Melon", "img": "https://i.scdn.co/image/ab67616d0000b273adcfbf7d4107233c8c1b7f3e"}, {"d": 174, "r": 77.0, "a": "Dr. Dre", "n": "The Chronic", "img": "https://i.scdn.co/image/ab67616d0000b2739710731c9d7baec635f1bab1"}, {"d": 175, "r": 83.0, "a": "Dream Theater", "n": "Images and Words", "img": "https://i.scdn.co/image/ab67616d0000b273f4d11b78efa76496f2acd618"}, {"d": 175, "r": 88.0, "a": "Rage Against the Machine", "n": "Rage Against the Machine", "img": "https://i.scdn.co/image/ab67616d0000b27354ab617bc2d4974ab6ffbece"}, {"d": 175, "r": 77.0, "a": "Rage Against the Machine", "n": "Evil Empire", "img": "https://i.scdn.co/image/ab67616d0000b273053f006079bce979e5fef1e1"}, {"d": 176, "r": 77.0, "a": "Sade", "n": "Love Deluxe", "img": "https://i.scdn.co/image/ab67616d0000b273ee65bbd54f993b5f01d5c511"}, {"d": 177, "r": 85.0, "a": "Stone Temple Pilots", "n": "Core", "img": "https://i.scdn.co/image/ab67616d0000b273b8bc0f023ff7a1c6663f28ec"}, {"d": 178, "r": 77.0, "a": "Smashing Pumpkins", "n": "Siamese Dream", "img": "https://i.scdn.co/image/ab67616d0000b2735274788f34fc7656d2856dfd"}, {"d": 178, "r": 75.0, "a": "Smashing Pumpkins", "n": "Mellon Collie and the Infinite", "img": "https://i.scdn.co/image/ab67616d0000b273431ac6e6f393acf475730ec6"}, {"d": 179, "r": 74.0, "a": "Smashing Pumpkins", "n": "Adore", "img": "https://i.scdn.co/image/ab67616d0000b273dc528993bff15162639b2d94"}, {"d": 179, "r": 79.0, "a": "Snoop Dogg", "n": "Doggystyle", "img": "https://i.scdn.co/image/ab67616d0000b273733af86f8dea9692a3f59d29"}, {"d": 179, "r": 79.0, "a": "Tool", "n": "Undertow", "img": "https://i.scdn.co/image/ab67616d0000b27382298636c94b8167c4793db2"}, {"d": 179, "r": 76.0, "a": "Tool", "n": "\u00c6nima", "img": "https://i.scdn.co/image/ab67616d0000b273dce45359981d62e087a29e6f"}, {"d": 180, "r": 76.0, "a": "Wu-Tang Clan", "n": "Enter the Wu-Tang (36 Chambers", "img": "https://i.scdn.co/image/ab67616d0000b2735901aaa980d3e714bf01171c"}, {"d": 181, "r": 79.0, "a": "Blur", "n": "Parklife", "img": "https://i.scdn.co/image/ab67616d0000b2732e4d97729bab58f1c0eabd33"}, {"d": 182, "r": 76.0, "a": "Green Day", "n": "Dookie", "img": "https://i.scdn.co/image/ab67616d0000b273db89b08034de626ebee6823d"}, {"d": 183, "r": 85.0, "a": "Green Day", "n": "Insomniac", "img": "https://i.scdn.co/image/ab67616d0000b273ac9a652335cf34de9a65292a"}, {"d": 184, "r": 81.0, "a": "Green Day", "n": "American Idiot", "img": "https://i.scdn.co/image/ab67616d0000b27308a1b1e0674086d3f1995e1b"}, {"d": 184, "r": 65.0, "a": "Hole", "n": "Live Through This", "img": "https://i.scdn.co/image/ab67616d0000b273be245e5b673371e6f95b19e2"}, {"d": 185, "r": 96.0, "a": "Jeff Buckley", "n": "Grace", "img": "https://i.scdn.co/image/ab67616d0000b2736a760642a56847027428cb61"}, {"d": 185, "r": 78.0, "a": "Nas", "n": "Illmatic", "img": "https://i.scdn.co/image/ab67616d0000b273045fc920ecf4f8094888ec26"}, {"d": 186, "r": 70.0, "a": "Pavement", "n": "Crooked Rain, Crooked Rain", "img": "https://i.scdn.co/image/ab67616d0000b2730a719f2817838a22e6a7e8c9"}, {"d": 186, "r": 56.0, "a": "Portishead", "n": "Dummy", "img": "https://i.scdn.co/image/ab67616d0000b273dc20397b139223620af148f6"}, {"d": 186, "r": 59.0, "a": "TLC", "n": "CrazySexyCool", "img": "https://i.scdn.co/image/ab67616d0000b273a6125b1964a555892c49ea53"}, {"d": 187, "r": 68.0, "a": "The Notorious B.I.G.", "n": "Ready to Die", "img": "https://i.scdn.co/image/ab67616d0000b2730f51e29700232d57fe8a0830"}, {"d": 187, "r": 71.0, "a": "The Notorious B.I.G.", "n": "Life After Death", "img": "https://i.scdn.co/image/ab67616d0000b273fde79b88e2a659c394c5ae30"}, {"d": 187, "r": 83.0, "a": "The Offspring", "n": "Smash", "img": "https://i.scdn.co/image/ab67616d0000b2730158cbde70672dd821972907"}, {"d": 188, "r": 77.0, "a": "Weezer", "n": "Weezer (\"The Blue Album\")", "img": "https://i.scdn.co/image/ab67616d0000b273345536847e60f622ee0eae96"}, {"d": 188, "r": 75.0, "a": "Tupac", "n": "Me Against the World", "img": "https://i.scdn.co/image/ab67616d0000b27304b9ab6bd4bf6a350ba902ea"}, {"d": 189, "r": 75.0, "a": "Tupac", "n": "All Eyez on Me", "img": "https://i.scdn.co/image/ab67616d0000b273073aebff28f79959d2543596"}, {"d": 190, "r": 67.0, "a": "Garbage", "n": "Garbage", "img": "https://i.scdn.co/image/ab67616d0000b273da79cbc3b29d31b96ee3fc3d"}, {"d": 191, "r": 74.0, "a": "Oasis", "n": "(What\u2019s the Story) Morning Glo", "img": "https://i.scdn.co/image/ab67616d0000b2737a4c8c59851c88f6794c3cbf"}, {"d": 191, "r": 44.0, "a": "PJ Harvey", "n": "To Bring You My Love", "img": "https://i.scdn.co/image/ab67616d0000b2736ea4af8437d78b607f30c8f0"}, {"d": 191, "r": 37.0, "a": "PJ Harvey", "n": "Let England Shake", "img": "https://i.scdn.co/image/ab67616d0000b2730682f13c108d0aa9fb3a7e7a"}, {"d": 192, "r": 76.0, "a": "Radiohead", "n": "OK Computer", "img": "https://i.scdn.co/image/ab67616d0000b273c8b444df094279e70d0ed856"}, {"d": 193, "r": 72.0, "a": "Radiohead", "n": "Kid A", "img": "https://i.scdn.co/image/ab67616d0000b2736c7112082b63beefffe40151"}, {"d": 193, "r": 74.0, "a": "Radiohead", "n": "In Rainbows", "img": "https://i.scdn.co/image/ab67616d0000b273de3c04b5fc750b68899b20a9"}, {"d": 194, "r": 78.0, "a": "Beck", "n": "Odelay", "img": "https://i.scdn.co/image/ab67616d0000b2733eedff0a0202da69fe1078de"}, {"d": 195, "r": 76.0, "a": "Beck", "n": "Mutations", "img": "https://i.scdn.co/image/ab67616d0000b27325e51318194fdc2dbfd601a5"}, {"d": 196, "r": 80.0, "a": "Beck", "n": "Morning Phase", "img": "https://i.scdn.co/image/ab67616d0000b273f585024d184f024efbd5d3a1"}, {"d": 197, "r": 65.0, "a": "Belle and Sebastian", "n": "If You\u2019re Feeling Sinister", "img": "https://i.scdn.co/image/ab67616d0000b273f34d475c7d683a9d7b5d1ae2"}, {"d": 198, "r": 93.0, "a": "Fugees", "n": "The Score", "img": "https://i.scdn.co/image/ab67616d0000b2735b7865be7f7fcc05faec6137"}, {"d": 198, "r": 22.0, "a": "Marilyn Manson", "n": "Antichrist Superstar", "img": "https://i.scdn.co/image/ab67616d0000b273c61d3a663bd18fe8cd97c947"}, {"d": 199, "r": 82.0, "a": "Matchbox Twenty", "n": "Yourself or Someone Like You", "img": "https://i.scdn.co/image/ab67616d0000b27323dbfb8b3b1be429587f5380"}, {"d": 200, "r": 64.0, "a": "Outkast", "n": "ATLiens", "img": "https://i.scdn.co/image/ab67616d0000b27384be563c5931d7ef35706148"}, {"d": 201, "r": 68.0, "a": "Outkast", "n": "Aquemini", "img": "https://i.scdn.co/image/ab67616d0000b273377a6d2051b23afea65ee41a"}, {"d": 201, "r": 65.0, "a": "Outkast", "n": "Stankonia", "img": "https://i.scdn.co/image/ab67616d0000b2732350e31bc346a6c20e9de166"}, {"d": 202, "r": 71.0, "a": "Sublime", "n": "Sublime", "img": "https://i.scdn.co/image/ab67616d0000b2738fc4b0dcfb9509553f195c85"}, {"d": 202, "r": 62.0, "a": "The Cardigans", "n": "First Band on the Moon", "img": "https://i.scdn.co/image/ab67616d0000b2730aac8ca880151fda470e91af"}, {"d": 202, "r": 66.0, "a": "Bj\u00f6rk", "n": "Homogenic", "img": "https://i.scdn.co/image/ab67616d0000b27361340a8868455be0d958fb39"}, {"d": 203, "r": 80.0, "a": "Blink-182", "n": "Dude Ranch", "img": "https://i.scdn.co/image/ab67616d0000b273330500a40905b093b134396a"}, {"d": 204, "r": 83.0, "a": "Daft Punk", "n": "Homework", "img": "https://i.scdn.co/image/ab67616d0000b2738ac778cc7d88779f74d33311"}, {"d": 205, "r": 80.0, "a": "Daft Punk", "n": "Random Access Memories", "img": "https://i.scdn.co/image/ab67616d0000b2739b9b36b0e22870b9f542d937"}, {"d": 206, "r": 47.0, "a": "Elliott Smith", "n": "Either/Or", "img": "https://i.scdn.co/image/ab67616d0000b2732f3552dc6f9e4e2748c5b8ba"}, {"d": 206, "r": 57.0, "a": "Elliott Smith", "n": "XO", "img": "https://i.scdn.co/image/ab67616d0000b273cdf1be0ff556d169eade4368"}, {"d": 206, "r": 64.0, "a": "Erykah Badu", "n": "Baduizm", "img": "https://i.scdn.co/image/ab67616d0000b273b5e18a80757ba2f787213d21"}, {"d": 207, "r": 82.0, "a": "Foo Fighters", "n": "There Is Nothing Left to Lose", "img": "https://i.scdn.co/image/ab67616d0000b2731759635c92b6314d3d3c9fe9"}, {"d": 207, "r": 81.0, "a": "Incubus", "n": "S.C.I.E.N.C.E.", "img": "https://i.scdn.co/image/ab67616d0000b27355e734bb400d8c827700541b"}, {"d": 208, "r": 62.0, "a": "Missy Elliott", "n": "Supa Dupa Fly", "img": "https://i.scdn.co/image/ab67616d0000b273f27571e59cac2e7a4624c9c4"}, {"d": 209, "r": 64.0, "a": "Missy Elliott", "n": "Under Construction", "img": "https://i.scdn.co/image/ab67616d0000b27395d8583bba8f3cd794fa5bae"}, {"d": 210, "r": 55.0, "a": "Savage Garden", "n": "Savage Garden", "img": "https://i.scdn.co/image/ab67616d0000b27384fef39a9a8293c86796599f"}, {"d": 211, "r": 86.0, "a": "Shania Twain", "n": "Come On Over", "img": "https://i.scdn.co/image/ab67616d0000b273f4fc5ce3068e340f35037770"}, {"d": 212, "r": 76.0, "a": "The Verve", "n": "Urban Hymns", "img": "https://i.scdn.co/image/ab67616d0000b273707d13d3f87652e737e94d45"}, {"d": 213, "r": 84.0, "a": "Goo Goo Dolls", "n": "Dizzy Up the Girl", "img": "https://i.scdn.co/image/ab67616d0000b273eda9478c39a21e1cdc6609ca"}, {"d": 214, "r": 58.0, "a": "Jay-Z", "n": "Vol. 2\u2026 Hard Knock Life", "img": "https://i.scdn.co/image/ab67616d0000b2739700390e9c33c62cfcd915ce"}, {"d": 215, "r": 72.0, "a": "Jay-Z", "n": "The Blueprint", "img": "https://i.scdn.co/image/ab67616d0000b273fec1b815bb3c50a64a90fd10"}, {"d": 216, "r": 44.0, "a": "Kid Rock", "n": "Devil Without a Cause", "img": "https://i.scdn.co/image/ab67616d0000b273a7c2567138b38cd431455297"}, {"d": 217, "r": 77.0, "a": "Lauryn Hill", "n": "The Miseducation of Lauryn Hil", "img": "https://i.scdn.co/image/ab67616d0000b273e08b1250db5f75643f1508c9"}, {"d": 217, "r": 33.0, "a": "Neutral Milk Hotel", "n": "In the Aeroplane Over the Sea", "img": "https://i.scdn.co/image/ab67616d0000b273589ce9a911c6e65b1f80c558"}, {"d": 218, "r": 72.0, "a": "Queens of the Stone Age", "n": "Queens of the Stone Age", "img": "https://i.scdn.co/image/ab67616d0000b2739092d41ad0fc7ed16068efe2"}, {"d": 219, "r": 67.0, "a": "Queens of the Stone Age", "n": "Rated R", "img": "https://i.scdn.co/image/ab67616d0000b2739c4d9db5d6895352b6eea6fc"}, {"d": 220, "r": 85.0, "a": "Queens of the Stone Age", "n": "Lullabies to Paralyze", "img": "https://i.scdn.co/image/ab67616d0000b2739fbc395aa3944da173e69fda"}, {"d": 221, "r": 43.0, "a": "System of a Down", "n": "System of a Down", "img": "https://i.scdn.co/image/ab67616d0000b2734e7ff4a30597e57f5bc988f9"}, {"d": 221, "r": 41.0, "a": "System of a Down", "n": "Toxicity", "img": "https://i.scdn.co/image/ab67616d0000b27307bc7d2a745636c356b4d0aa"}, {"d": 222, "r": 97.0, "a": "Creed", "n": "Human Clay", "img": "https://i.scdn.co/image/ab67616d0000b273f8f048a5f4749c970078a4fb"}, {"d": 223, "r": 68.0, "a": "Dido", "n": "No Angel", "img": "https://i.scdn.co/image/ab67616d0000b2733e5cbf3b3ac5905cb68377d5"}, {"d": 224, "r": 72.0, "a": "Eminem", "n": "The Slim Shady LP", "img": "https://i.scdn.co/image/ab67616d0000b2739bef45ee387f274ea3198c55"}, {"d": 225, "r": 67.0, "a": "Eminem", "n": "The Marshall Mathers LP", "img": "https://i.scdn.co/image/ab67616d0000b273dbb3dd82da45b7d7f31b1b42"}, {"d": 226, "r": 62.0, "a": "Limp Bizkit", "n": "Significant Other", "img": "https://i.scdn.co/image/ab67616d0000b2733783782de74f61e36795bf9c"}, {"d": 227, "r": 57.0, "a": "Silverchair", "n": "Neon Ballroom", "img": "https://i.scdn.co/image/ab67616d0000b2731b0201a6273523f60b8b5406"}, {"d": 229, "r": 64.0, "a": "D\u2019Angelo", "n": "Voodoo", "img": "https://i.scdn.co/image/ab67616d0000b2732b3dc336a7a69293c25d9ade"}, {"d": 230, "r": 68.0, "a": "The Roots", "n": "Things Fall Apart", "img": "https://i.scdn.co/image/ab67616d0000b273bac8015c7e47644fb86e27e2"}, {"d": 230, "r": 64.0, "a": "The Hives", "n": "Veni Vidi Vicious", "img": "https://i.scdn.co/image/ab67616d0000b2735b903bed9b096aa6022ff463"}, {"d": 231, "r": 80.0, "a": "Coldplay", "n": "Parachutes", "img": "https://i.scdn.co/image/ab67616d0000b2739164bafe9aaa168d93f4816a"}, {"d": 231, "r": 73.0, "a": "Coldplay", "n": "A Rush of Blood to the Head", "img": "https://i.scdn.co/image/ab67616d0000b273de09e02aa7febf30b7c02d82"}, {"d": 231, "r": 72.0, "a": "Michelle Branch", "n": "The Spirit Room", "img": "https://i.scdn.co/image/ab67616d0000b27311e62b6d4e56b060aa71e09d"}, {"d": 231, "r": 67.0, "a": "Carrie Underwood", "n": "Some Hearts", "img": "https://i.scdn.co/image/ab67616d0000b273724bd326692d222c5906b0b0"}, {"d": 231, "r": 68.0, "a": "Lifehouse", "n": "No Name Face", "img": "https://i.scdn.co/image/ab67616d0000b273d0494f682c986764e0bc629c"}, {"d": 231, "r": 79.0, "a": "The Killers", "n": "Hot Fuss", "img": "https://i.scdn.co/image/ab67616d0000b273ccdddd46119a4ff53eaf1f5d"}, {"d": 231, "r": 76.0, "a": "Maroon 5", "n": "Songs About Jane", "img": "https://i.scdn.co/image/ab67616d0000b27392f2d790c6a97b195f66d51e"}, {"d": 232, "r": 78.0, "a": "Train", "n": "Drops of Jupiter", "img": "https://i.scdn.co/image/ab67616d0000b273a65df73c4011b6a9357c89f0"}, {"d": 233, "r": 72.0, "a": "Mark Knopfler", "n": "Sailing to Philadelphia", "img": "https://i.scdn.co/image/ab67616d0000b273bb361c3e1a37fc6414a16d90"}, {"d": 233, "r": 77.0, "a": "Jimmy Eat World", "n": "Bleed American", "img": "https://i.scdn.co/image/ab67616d0000b27395d1d98c5176e4f982bd73d6"}, {"d": 234, "r": 80.0, "a": "Muse", "n": "Origin of Symmetry", "img": "https://i.scdn.co/image/ab67616d0000b273a9e6856251d6c4b13167924a"}, {"d": 235, "r": 81.0, "a": "Muse", "n": "Absolution", "img": "https://i.scdn.co/image/ab67616d0000b2733303a842ee1bc0b23204333d"}, {"d": 236, "r": 83.0, "a": "Muse", "n": "Black Holes and Revelations", "img": "https://i.scdn.co/image/ab67616d0000b27328933b808bfb4cbbd0385400"}, {"d": 237, "r": 88.0, "a": "The Strokes", "n": "Is This It", "img": "https://i.scdn.co/image/ab67616d0000b27313f2466b83507515291acce4"}, {"d": 238, "r": 95.0, "a": "The White Stripes", "n": "White Blood Cells", "img": "https://i.scdn.co/image/ab67616d0000b273c6084929566743530de8c721"}, {"d": 239, "r": 90.0, "a": "The White Stripes", "n": "Elephant", "img": "https://i.scdn.co/image/ab67616d0000b273a69f71a8794e2d867a52f98f"}, {"d": 240, "r": 90.0, "a": "The White Stripes", "n": "Icky Thump", "img": "https://i.scdn.co/image/ab67616d0000b27375a9cde08f286d9420709048"}, {"d": 241, "r": 85.0, "a": "The White Stripes", "n": "The White Stripes", "img": "https://i.scdn.co/image/ab67616d0000b2735aa65964dd829b735c9a66a9"}, {"d": 242, "r": 85.0, "a": "The White Stripes", "n": "Get Behind Me Satan", "img": "https://i.scdn.co/image/ab67616d0000b273e8a1ae591befe4bb0a9261ab"}, {"d": 243, "r": 96.0, "a": "Audioslave", "n": "Audioslave", "img": "https://i.scdn.co/image/ab67616d0000b273a7292b6863258e889b78d787"}, {"d": 244, "r": 74.0, "a": "Avril Lavigne", "n": "Let Go", "img": "https://i.scdn.co/image/ab67616d0000b273f7ec724fbf97a30869d06240"}, {"d": 245, "r": 67.0, "a": "Interpol", "n": "Turn on the Bright Lights", "img": "https://i.scdn.co/image/ab67616d0000b27314f8df9fb9c2d3056a994390"}, {"d": 246, "r": 77.0, "a": "Norah Jones", "n": "Come Away With Me", "img": "https://i.scdn.co/image/ab67616d0000b273c648a42b5dad72c8aafceeec"}, {"d": 247, "r": 65.0, "a": "The Libertines", "n": "Up the Bracket", "img": "https://i.scdn.co/image/ab67616d0000b2731018f38f0508780886fd55af"}, {"d": 248, "r": 62.0, "a": "Wilco", "n": "Yankee Hotel Foxtrot", "img": "https://i.scdn.co/image/ab67616d0000b2739ae9edb12345dcb5172374c8"}, {"d": 249, "r": 82.0, "a": "Wilco", "n": "Wilco (The Album)", "img": "https://i.scdn.co/image/ab67616d0000b2733f4874f0518135a803db054c"}, {"d": 250, "r": 71.0, "a": "Amy Winehouse", "n": "Frank", "img": "https://i.scdn.co/image/ab67616d0000b27348139dae5ec404ceb12213c4"}, {"d": 251, "r": 74.0, "a": "Amy Winehouse", "n": "Back to Black", "img": "https://i.scdn.co/image/ab67616d0000b27376ffb5b5ab045d22c81235c1"}, {"d": 252, "r": 82.0, "a": "Jet", "n": "Get Born", "img": "https://i.scdn.co/image/ab67616d0000b273866c0774471b4d4a5129bb83"}, {"d": 252, "r": 71.0, "a": "The Postal Service", "n": "Give Up", "img": "https://i.scdn.co/image/ab67616d0000b27385f0e9a8cd0d663470492ec1"}, {"d": 252, "r": 43.0, "a": "Yeah Yeah Yeahs", "n": "Fever to Tell", "img": "https://i.scdn.co/image/ab67616d0000b2731b1cb4ef0f096f9d66fc3dc6"}, {"d": 252, "r": 77.0, "a": "Franz Ferdinand", "n": "Franz Ferdinand", "img": "https://i.scdn.co/image/ab67616d0000b27309a90531b85be7899c3234c4"}, {"d": 252, "r": 65.0, "a": "John Frusciante", "n": "Shadows Collide with People", "img": "https://i.scdn.co/image/ab67616d0000b273170c1534eab1173ca18982ed"}, {"d": 253, "r": 76.0, "a": "Modest Mouse", "n": "Good News for People Who Love ", "img": "https://i.scdn.co/image/ab67616d0000b273cc68329bfbf34037df965dc1"}, {"d": 254, "r": 88.0, "a": "My Chemical Romance", "n": "Three Cheers for Sweet Revenge", "img": "https://i.scdn.co/image/ab67616d0000b273cab7ae4868e9f9ce6bdfdf43"}, {"d": 255, "r": 75.0, "a": "The Black Keys", "n": "Rubber Factory", "img": "https://i.scdn.co/image/ab67616d0000b273f39a4ff980d3bda1138da172"}, {"d": 256, "r": 79.0, "a": "The Black Keys", "n": "Attack & Release", "img": "https://i.scdn.co/image/ab67616d0000b273b6b648147df2f34d39fc1e14"}, {"d": 256, "r": 86.0, "a": "The Black Keys", "n": "Brothers", "img": "https://i.scdn.co/image/ab67616d0000b27343f5bd543a2a1ab37fb40a8b"}, {"d": 257, "r": 67.0, "a": "Arcade Fire", "n": "Funeral", "img": "https://i.scdn.co/image/ab67616d0000b2737870762a58313ad6f981d664"}, {"d": 258, "r": 74.0, "a": "Arcade Fire", "n": "The Suburbs", "img": "https://i.scdn.co/image/ab67616d0000b2731d6b4b0418200b6324734062"}, {"d": 259, "r": 75.0, "a": "Arcade Fire", "n": "Reflektor", "img": "https://i.scdn.co/image/ab67616d0000b273678bfbaf23b8dfa454017b0b"}, {"d": 260, "r": 58.0, "a": "Bloc Party", "n": "Silent Alarm", "img": "https://i.scdn.co/image/ab67616d0000b273029f1f3a1a118dc326687c34"}, {"d": 261, "r": 49.0, "a": "Death Cab for Cutie", "n": "Plans", "img": "https://i.scdn.co/image/ab67616d0000b273c985bcc18dd81da80839e5a9"}, {"d": 262, "r": 76.0, "a": "Kanye West", "n": "Late Registration", "img": "https://i.scdn.co/image/ab67616d0000b273428d2255141c2119409a31b2"}, {"d": 262, "r": 80.0, "a": "Kanye West", "n": "Graduation", "img": "https://i.scdn.co/image/ab67616d0000b27326f7f19c7f0381e56156c94a"}, {"d": 262, "r": 77.0, "a": "Kanye West", "n": "My Beautiful Dark Twisted Fant", "img": "https://i.scdn.co/image/ab67616d0000b273d9194aa18fa4c9362b47464f"}, {"d": 263, "r": 77.0, "a": "LCD Soundsystem", "n": "LCD Soundsystem", "img": "https://i.scdn.co/image/ab67616d0000b27375ec666254c50336a378ad01"}, {"d": 264, "r": 73.0, "a": "LCD Soundsystem", "n": "Sound of Silver", "img": "https://i.scdn.co/image/ab67616d0000b273e6272ad26e7a55bc342a6dd0"}, {"d": 264, "r": 80.0, "a": "LCD Soundsystem", "n": "American Dream", "img": "https://i.scdn.co/image/ab67616d0000b273945696d01c650eeade335ac9"}, {"d": 265, "r": 53.0, "a": "Sleater-Kinney", "n": "The Woods", "img": "https://i.scdn.co/image/ab67616d0000b2737d7487703050853d8d952bb7"}, {"d": 265, "r": 68.0, "a": "The Decemberists", "n": "Picaresque", "img": "https://i.scdn.co/image/ab67616d0000b2732550872f317d70f5e304c835"}, {"d": 266, "r": 70.0, "a": "The Decemberists", "n": "The Crane Wife", "img": "https://i.scdn.co/image/ab67616d0000b2734c48d53016404efd3fd07ac8"}, {"d": 266, "r": 73.0, "a": "The Fray", "n": "How to Save a Life", "img": "https://i.scdn.co/image/ab67616d0000b27359b8b957f164ce660919f1f4"}, {"d": 267, "r": 78.0, "a": "Arctic Monkeys", "n": "Whatever People Say I Am, That", "img": "https://i.scdn.co/image/ab67616d0000b2736b3fa88bdd4af566fbbf2bbf"}, {"d": 267, "r": 82.0, "a": "Arctic Monkeys", "n": "Humbug", "img": "https://i.scdn.co/image/ab67616d0000b273f65d720a5d70dbb93e96d528"}, {"d": 267, "r": 94.0, "a": "Arctic Monkeys", "n": "AM", "img": "https://i.scdn.co/image/ab67616d0000b2734ae1c4c5c45aabe565499163"}, {"d": 268, "r": 85.0, "a": "Gnarls Barkley", "n": "St. Elsewhere", "img": "https://i.scdn.co/image/ab67616d0000b273ab051a2c680f39c0d9827706"}, {"d": 268, "r": 95.0, "a": "John Mayer", "n": "Continuum", "img": "https://i.scdn.co/image/ab67616d0000b2737af5fdc5ef048a68db62b85f"}, {"d": 269, "r": 72.0, "a": "Kings of Leon", "n": "Aha Shake Heartbreak", "img": "https://i.scdn.co/image/ab67616d0000b2738df6e3203adc247218810906"}, {"d": 269, "r": 81.0, "a": "Kings of Leon", "n": "Only by the Night", "img": "https://i.scdn.co/image/ab67616d0000b2732519d01c0cca06f134eeadd8"}, {"d": 270, "r": 65.0, "a": "TV on the Radio", "n": "Return to Cookie Mountain", "img": "https://i.scdn.co/image/ab67616d0000b2739a9c25a9f9f7adb419694a4b"}, {"d": 270, "r": 88.0, "a": "John Mayer", "n": "Battle Studies", "img": "https://i.scdn.co/image/ab67616d0000b2731e3dbe4453ed61633c472fbe"}, {"d": 271, "r": 68.0, "a": "Wolfmother", "n": "Wolfmother", "img": "https://i.scdn.co/image/ab67616d0000b27304422c5d997bfa6c750a12f1"}, {"d": 271, "r": 100.0, "a": "Alter Bridge", "n": "Blackbird", "img": "https://i.scdn.co/image/ab67616d0000b27333fe3896fc5aef6cb728b467"}, {"d": 272, "r": 72.0, "a": "Feist", "n": "The Reminder", "img": "https://i.scdn.co/image/ab67616d0000b273b17d3cdd360973516ade9e6d"}, {"d": 272, "r": 61.0, "a": "Rihanna", "n": "Good Girl Gone Bad", "img": "https://i.scdn.co/image/ab67616d0000b273b9ff0a5f40d3406aed5e5e3b"}, {"d": 273, "r": 56.0, "a": "The National", "n": "Boxer", "img": "https://i.scdn.co/image/ab67616d0000b273815d0d5cf4f0167ee18367d9"}, {"d": 274, "r": 73.0, "a": "The Shins", "n": "Wincing the Night Away", "img": "https://i.scdn.co/image/ab67616d0000b273c4d77bad843dfae691cca473"}, {"d": 275, "r": 71.0, "a": "Bon Iver", "n": "For Emma, Forever Ago", "img": "https://i.scdn.co/image/ab67616d0000b273bf7c317a63c4f128b8823406"}, {"d": 275, "r": 78.0, "a": "Bon Iver", "n": "22, A Million", "img": "https://i.scdn.co/image/ab67616d0000b27326a351da1ea9d77a1b45dc6b"}, {"d": 276, "r": 80.0, "a": "Fleet Foxes", "n": "Fleet Foxes", "img": "https://i.scdn.co/image/ab67616d0000b2733818b4c636e2a7fdea3bf965"}, {"d": 276, "r": 75.0, "a": "Fleet Foxes", "n": "Helplessness Blues", "img": "https://i.scdn.co/image/ab67616d0000b27375ff22a37b0cc0381d11c2c1"}, {"d": 276, "r": 83.0, "a": "Lil Wayne", "n": "Tha Carter III", "img": "https://i.scdn.co/image/ab67616d0000b27302a999c3a283b5392e57737d"}, {"d": 277, "r": 85.0, "a": "MGMT", "n": "Oracular Spectacular", "img": "https://i.scdn.co/image/ab67616d0000b2738b32b139981e79f2ebe005eb"}, {"d": 277, "r": 76.0, "a": "Taylor Swift", "n": "Fearless", "img": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"}, {"d": 277, "r": 79.0, "a": "Taylor Swift", "n": "Folklore", "img": "https://i.scdn.co/image/ab67616d0000b27395f754318336a07e85ec59bc"}, {"d": 277, "r": 65.0, "a": "Animal Collective", "n": "Merriweather Post Pavilion", "img": "https://i.scdn.co/image/ab67616d0000b273a7f85f2df08fbeb6dac5677c"}, {"d": 278, "r": 63.0, "a": "Animals as Leaders", "n": "Animals as Leaders", "img": "https://i.scdn.co/image/ab67616d0000b27393bb9d619c92bcd6ba242c39"}, {"d": 278, "r": 71.0, "a": "Derek Trucks Band", "n": "Already Free", "img": "https://i.scdn.co/image/ab67616d0000b2739c372d20f771d3e46a9d95d1"}, {"d": 279, "r": 80.0, "a": "Mastodon", "n": "Crack the Skye", "img": "https://i.scdn.co/image/ab67616d0000b273ac79283ccb6d08af31fd33d8"}, {"d": 279, "r": 74.0, "a": "Phoenix", "n": "Wolfgang Amadeus Phoenix", "img": "https://i.scdn.co/image/ab67616d0000b27362cbc442278eefdde1a93efd"}, {"d": 280, "r": 71.0, "a": "Beach House", "n": "Teen Dream", "img": "https://i.scdn.co/image/ab67616d0000b2739ba6a1b973e91955ab23c50c"}, {"d": 280, "r": 74.0, "a": "Janelle Mon\u00e1e", "n": "The ArchAndroid", "img": "https://i.scdn.co/image/ab67616d0000b273120a1366324c2ae1728e17e5"}, {"d": 281, "r": 60.0, "a": "Jason Aldean", "n": "My Kinda Party", "img": "https://i.scdn.co/image/ab67616d0000b273eb28649b53d81d41e285ad45"}, {"d": 282, "r": 80.0, "a": "Tame Impala", "n": "Innerspeaker", "img": "https://i.scdn.co/image/ab67616d0000b273176e82d09ac75d62810f0056"}, {"d": 283, "r": 80.0, "a": "Tame Impala", "n": "Lonerism", "img": "https://i.scdn.co/image/ab67616d0000b273370c12f82872c9cfaee80193"}, {"d": 284, "r": 86.0, "a": "Tame Impala", "n": "Currents", "img": "https://i.scdn.co/image/ab67616d0000b2739e1cfc756886ac782e363d79"}, {"d": 285, "r": 83.0, "a": "Vampire Weekend", "n": "Contra", "img": "https://i.scdn.co/image/ab67616d0000b273d677f7d8a27bc830caacbeeb"}, {"d": 285, "r": 86.0, "a": "John Mayer", "n": "Sob Rock", "img": "https://i.scdn.co/image/ab67616d0000b273779063301154e835a91a35e0"}, {"d": 286, "r": 93.0, "a": "Adele", "n": "21", "img": "https://i.scdn.co/image/ab67616d0000b2732118bf9b198b05a95ded6300"}, {"d": 287, "r": 84.0, "a": "Drake", "n": "Take Care", "img": "https://i.scdn.co/image/ab67616d0000b273c7ea04a9b455e3f68ef82550"}, {"d": 288, "r": 62.0, "a": "St. Vincent", "n": "Strange Mercy", "img": "https://i.scdn.co/image/ab67616d0000b273194059a08c20b4f39bbb31c7"}, {"d": 289, "r": 54.0, "a": "The War on Drugs", "n": "Slave Ambient", "img": "https://i.scdn.co/image/ab67616d0000b2734749e3e8832e78f03fc0ed30"}, {"d": 290, "r": 56.0, "a": "The War on Drugs", "n": "Lost in the Dream", "img": "https://i.scdn.co/image/ab67616d0000b273f34338e9270f9c0561cf4c7e"}, {"d": 291, "r": 66.0, "a": "The Weeknd", "n": "House of Balloons", "img": "https://i.scdn.co/image/ab67616d0000b273274b406a7e18acebcf743079"}, {"d": 292, "r": 86.0, "a": "The Weeknd", "n": "Beauty Behind the Madness", "img": "https://i.scdn.co/image/ab67616d0000b2737fcead687e99583072cc217b"}, {"d": 293, "r": 75.0, "a": "The Weeknd", "n": "After Hours", "img": "https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36"}, {"d": 294, "r": 66.0, "a": "Alabama Shakes", "n": "Sound & Color", "img": "https://ia904608.us.archive.org/28/items/mbid-841d43d0-3520-48ad-8bc1-604b554967b8/mbid-841d43d0-3520-48ad-8bc1-604b554967b8-30792587738_thumb500.jpg"}, {"d": 295, "r": 78.0, "a": "Gary Clark Jr.", "n": "Blak and Blu", "img": "https://i.scdn.co/image/ab67616d0000b273b1166865f86c48ab7c7a74e7"}, {"d": 296, "r": 82.0, "a": "Kendrick Lamar", "n": "good kid, m.A.A.d city", "img": "https://i.scdn.co/image/ab67616d0000b273d58e537cea05c2156792c53d"}, {"d": 297, "r": 80.0, "a": "Kendrick Lamar", "n": "To Pimp a Butterfly", "img": "https://i.scdn.co/image/ab67616d0000b273cdb645498cd3d8a2db4d05e1"}, {"d": 298, "r": 86.0, "a": "Kendrick Lamar", "n": "DAMN.", "img": "https://i.scdn.co/image/ab67616d0000b2738b52c6b9bc4e43d873869699"}, {"d": 299, "r": 77.0, "a": "Miguel", "n": "Kaleidoscope Dream", "img": "https://i.scdn.co/image/ab67616d0000b273fe113f478616e62a8fe14108"}, {"d": 300, "r": 79.0, "a": "The Lumineers", "n": "The Lumineers", "img": "https://i.scdn.co/image/ab67616d0000b273f350c13195ce048876b5fea4"}, {"d": 301, "r": 63.0, "a": "Luke Bryan", "n": "Crash My Party", "img": "https://i.scdn.co/image/ab67616d0000b27316fce2616744168b30462991"}, {"d": 302, "r": 79.0, "a": "The Winery Dogs", "n": "The Winery Dogs", "img": "https://i.scdn.co/image/ab67616d0000b2730d727c07273e711feb5695f6"}, {"d": 303, "r": 77.0, "a": "Ariana Grande", "n": "My Everything", "img": "https://i.scdn.co/image/ab67616d0000b273deec12a28d1e336c5052e9aa"}, {"d": 304, "r": 54.0, "a": "Run the Jewels", "n": "Run the Jewels 2", "img": "https://i.scdn.co/image/ab67616d0000b2739742a327795c8c656d4c436d"}, {"d": 305, "r": 50.0, "a": "Run the Jewels", "n": "RTJ4", "img": "https://i.scdn.co/image/ab67616d0000b27342898aa855aa284ad4b2c1ff"}, {"d": 306, "r": 73.0, "a": "Sam Hunt", "n": "Montevallo", "img": "https://i.scdn.co/image/ab67616d0000b2739e6b694939f7495f67a0de33"}, {"d": 306, "r": 80.0, "a": "Spoon", "n": "They Want My Soul", "img": "https://i.scdn.co/image/ab67616d0000b2735126861ec7787b311b0f8a33"}, {"d": 307, "r": 60.0, "a": "Courtney Barnett", "n": "Sometimes I Sit and Think, and", "img": "https://i.scdn.co/image/ab67616d0000b273dd8c02f341b76339755c463b"}, {"d": 308, "r": 50.0, "a": "Ghost", "n": "Meliora", "img": "https://i.scdn.co/image/ab67616d0000b2739e4a3c9e73ce2429c4d1fe70"}, {"d": 309, "r": 60.0, "a": "Jamie xx", "n": "In Colour", "img": "https://i.scdn.co/image/ab67616d0000b273e512588704373fdc8c8d7001"}, {"d": 310, "r": 71.0, "a": "Beyonc\u00e9", "n": "Lemonade", "img": "https://i.scdn.co/image/ab67616d0000b27389992f4d7d4ab94937bf9e23"}, {"d": 311, "r": 79.0, "a": "Plini", "n": "Handmade Cities", "img": "https://i.scdn.co/image/ab67616d0000b2739c36bd7f5ec02c8af6c18cb8"}, {"d": 312, "r": 73.0, "a": "Solange", "n": "A Seat at the Table", "img": "https://i.scdn.co/image/ab67616d0000b2731c4540d0ecafaa45305aa5a0"}, {"d": 313, "r": 77.0, "a": "SZA", "n": "Ctrl", "img": "https://i.scdn.co/image/ab67616d0000b2734c79d5ec52a6d0302f3add25"}, {"d": 314, "r": 78.0, "a": "SZA", "n": "SOS", "img": "https://i.scdn.co/image/ab67616d0000b2737f5a318e3ff35defa8d0e4af"}, {"d": 315, "r": 57.0, "a": "IDLES", "n": "Joy as an Act of Resistance", "img": "https://i.scdn.co/image/ab67616d0000b273f247f4e8334b745fc2dd080f"}, {"d": 316, "r": 76.0, "a": "Kacey Musgraves", "n": "Golden Hour", "img": "https://i.scdn.co/image/ab67616d0000b2732e35d25eb7288830d5540484"}, {"d": 317, "r": 47.0, "a": "Mitski", "n": "Be the Cowboy", "img": "https://i.scdn.co/image/ab67616d0000b273c428f67b4a9b7e1114dfc117"}, {"d": 318, "r": 79.0, "a": "Polyphia", "n": "New Levels New Devils", "img": "https://i.scdn.co/image/ab67616d0000b2737a799cc62e624fd6432779e3"}, {"d": 319, "r": 74.0, "a": "Rolling Blackouts Coastal Fe", "n": "Hope Downs", "img": "https://i.scdn.co/image/ab67616d0000b27346657e3c4403688076c94b94"}, {"d": 320, "r": 64.0, "a": "Rosal\u00eda", "n": "El Mal Querer", "img": "https://i.scdn.co/image/ab67616d0000b273f4d64a6a6b7e24b6bd9f009f"}, {"d": 321, "r": 66.0, "a": "Snail Mail", "n": "Lush", "img": "https://i.scdn.co/image/ab67616d0000b2732a6451bf50693f79b88e4954"}, {"d": 322, "r": 76.0, "a": "Billie Eilish", "n": "When We All Fall Asleep, Where", "img": "https://i.scdn.co/image/ab67616d0000b27350a3147b4edd7701a876c6ce"}, {"d": 323, "r": 72.0, "a": "Billie Eilish", "n": "Happier Than Ever", "img": "https://i.scdn.co/image/ab67616d0000b2732a038d3bf875d23e4aeaa84e"}, {"d": 324, "r": 78.0, "a": "Black Pumas", "n": "Black Pumas", "img": "https://i.scdn.co/image/ab67616d0000b273b78008fa0713ff7e5445566b"}, {"d": 325, "r": 71.0, "a": "Fontaines D.C.", "n": "Dogrel", "img": "https://i.scdn.co/image/ab67616d0000b27341097c26aa8fd44a2986ad26"}, {"d": 326, "r": 66.0, "a": "Lana Del Rey", "n": "Norman F***ing Rockwell!", "img": "https://i.scdn.co/image/ab67616d0000b273879e9318cb9f4e05ee552ac9"}, {"d": 327, "r": 68.0, "a": "Tyler, the Creator", "n": "IGOR", "img": "https://i.scdn.co/image/ab67616d0000b2737005885df706891a3c182a57"}, {"d": 328, "r": 83.0, "a": "Dua Lipa", "n": "Future Nostalgia", "img": "https://i.scdn.co/image/ab67616d0000b2734bc66095f8a70bc4e6593f4f"}, {"d": 329, "r": 55.0, "a": "Fiona Apple", "n": "Fetch the Bolt Cutters", "img": "https://i.scdn.co/image/ab67616d0000b273841292c1316c4bf85447bcd9"}, {"d": 330, "r": 68.0, "a": "Phoebe Bridgers", "n": "Punisher", "img": "https://i.scdn.co/image/ab67616d0000b273a91b75c9ef65ed8d760ff600"}, {"d": 331, "r": 65.0, "a": "Rina Sawayama", "n": "SAWAYAMA", "img": "https://i.scdn.co/image/ab67616d0000b2735b131d745dafd8666254fe96"}, {"d": 332, "r": 71.0, "a": "Wet Leg", "n": "Wet Leg", "img": "https://i.scdn.co/image/ab67616d0000b273ea1126a33b0fb88e79915262"}, {"d": 333, "r": 81.0, "a": "mgk", "n": "lost americana", "img": "https://i.scdn.co/image/ab67616d0000b273fffa6d4dde821736df7a7a35"}, {"d": 334, "r": 85.0, "a": "Noah Kahan", "n": "Stick Season", "img": "https://i.scdn.co/image/ab67616d0000b2736ee35072df1af802cca09918"}, {"d": 334, "r": 91.0, "a": "Ren", "n": "Sick Boi", "img": "https://i.scdn.co/image/ab67616d0000b273c57dbf922a7598c875eec4ae"}];
+const tlCanvas=document.getElementById("tlCanvas");
+const tlTip=document.getElementById("tlTip");
+
+function drawTimeline(){
+  const W=tlCanvas.offsetWidth||340, H=180;
+  const dpr=window.devicePixelRatio||1;
+  tlCanvas.width=W*dpr; tlCanvas.height=H*dpr;
+  tlCanvas.style.width=W+"px"; tlCanvas.style.height=H+"px";
+  const ctx=tlCanvas.getContext("2d");
+  ctx.scale(dpr,dpr);
+  const pad={l:28,r:12,t:12,b:24};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+  const px=d=>pad.l+((d-1)/334)*cw;
+  const py=r=>pad.t+ch-(r/100)*ch;
+
+  // Grid
+  ctx.strokeStyle="rgba(91,155,248,0.08)"; ctx.lineWidth=0.5;
+  [25,50,75,100].forEach(r=>{ctx.beginPath();ctx.moveTo(pad.l,py(r));ctx.lineTo(pad.l+cw,py(r));ctx.stroke();});
+
+  // Labels
+  ctx.fillStyle="rgba(61,90,120,0.9)"; ctx.font="9px system-ui,sans-serif"; ctx.textAlign="right";
+  [0,50,100].forEach(r=>ctx.fillText(r,pad.l-4,py(r)+3));
+  ctx.textAlign="center";
+  [1,100,200,300,335].forEach(d=>ctx.fillText("d"+d,px(d),H-pad.b+12));
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(px(TL[0].d),py(TL[0].r));
+  for(let i=1;i<TL.length;i++){
+    const mx=(px(TL[i-1].d)+px(TL[i].d))/2;
+    ctx.bezierCurveTo(mx,py(TL[i-1].r),mx,py(TL[i].r),px(TL[i].d),py(TL[i].r));
+  }
+  const grad=ctx.createLinearGradient(pad.l,0,pad.l+cw,0);
+  grad.addColorStop(0,"rgba(167,139,250,0.8)");
+  grad.addColorStop(0.5,"rgba(91,155,248,0.9)");
+  grad.addColorStop(1,"rgba(245,200,66,0.9)");
+  ctx.strokeStyle=grad; ctx.lineWidth=1.8; ctx.lineJoin="round"; ctx.stroke();
+
+  // Area
+  ctx.lineTo(px(TL[TL.length-1].d),py(0));
+  ctx.lineTo(px(TL[0].d),py(0));
+  ctx.closePath();
+  const ag=ctx.createLinearGradient(0,pad.t,0,pad.t+ch);
+  ag.addColorStop(0,"rgba(91,155,248,0.12)"); ag.addColorStop(1,"rgba(91,155,248,0)");
+  ctx.fillStyle=ag; ctx.fill();
+
+  // Gold dot for the 100
+  const p100=TL.find(t=>t.r===100);
+  if(p100){ctx.beginPath();ctx.arc(px(p100.d),py(p100.r),4,0,Math.PI*2);ctx.fillStyle="#F5C842";ctx.fill();}
+}
+
+function tlFindNearest(clientX){
+  const rect=tlCanvas.getBoundingClientRect();
+  const x=clientX-rect.left;
+  const pad=28, cw=tlCanvas.offsetWidth-40;
+  const dayEst=1+(x-pad)/cw*334;
+  let best=null,bestD=Infinity;
+  TL.forEach(t=>{const d=Math.abs(t.d-dayEst);if(d<bestD){bestD=d;best=t;}});
+  return best;
+}
+function tlShowTip(item,clientX){
+  const rect=tlCanvas.getBoundingClientRect();
+  const x=clientX-rect.left;
+  const pad=28,cw=tlCanvas.offsetWidth-40,ch=180-36;
+  const tipX=x+12>rect.width-160?x-160:x+12;
+  const tipY=Math.max(0,ch-((item.r/100)*ch)-30);
+  document.getElementById("tipScore").textContent=item.r;
+  document.getElementById("tipAlbum").textContent=item.n;
+  document.getElementById("tipArtist").textContent=item.a;
+  document.getElementById("tipDay").textContent="Day "+item.d;
+  tlTip.style.left=tipX+"px"; tlTip.style.top=tipY+"px";
+  tlTip.classList.add("visible");
+}
+tlCanvas.addEventListener("mousemove",e=>{const t=tlFindNearest(e.clientX);if(t)tlShowTip(t,e.clientX);});
+tlCanvas.addEventListener("mouseleave",()=>tlTip.classList.remove("visible"));
+tlCanvas.addEventListener("touchmove",e=>{e.preventDefault();const t=tlFindNearest(e.touches[0].clientX);if(t)tlShowTip(t,e.touches[0].clientX);},{passive:false});
+tlCanvas.addEventListener("touchend",()=>setTimeout(()=>tlTip.classList.remove("visible"),1500));
+
+// ==========================================
+// VINYL
+// ==========================================
+const vinylDisc=document.getElementById("vinylDisc");
+let spinning=true;
+document.getElementById("vinylOuter").addEventListener("click",()=>{
+  spinning=!spinning;
+  vinylDisc.style.animationPlayState=spinning?"running":"paused";
+});
+
+// ==========================================
+// FRETBOARD ROAD
+// The key insight: use offsetTop (not getBoundingClientRect) to get
+// positions relative to the container. offsetTop is layout-based and
+// unaffected by scroll position or CSS transforms on ancestors.
+// We calculate each milestone's center Y within journeyCards,
+// then draw bezier segments between them on the canvas.
+// ==========================================
+function drawRoad(){
+  const wrap = document.getElementById("roadWrap");
+  const cards = document.getElementById("journeyCards");
+  const roadCanvas = document.getElementById("roadCanvas");
+  const travCanvas = document.getElementById("travCanvas");
+
+  const W = wrap.offsetWidth || 390;
+  // Reset minHeight first so we measure natural content height, not our own constraint
+  wrap.style.minHeight = '';
+  // Force reflow
+  void wrap.offsetHeight;
+  const H = Math.max(cards.scrollHeight, cards.offsetHeight);
+  if(H < 200) return;
+
+  // Size both canvases
+  [roadCanvas, travCanvas].forEach(c=>{
+    c.width = W; c.height = H;
+    c.style.width = W+"px"; c.style.height = H+"px";
+  });
+  wrap.style.minHeight = H+"px";
+
+  const ctx = roadCanvas.getContext("2d");
+  ctx.clearRect(0, 0, W, H);
+
+  const milestones = Array.from(cards.querySelectorAll(".milestone"));
+  if(!milestones.length) return;
+
+  // Use offsetTop walking = reads layout, not viewport position.
+  // This works regardless of scroll position or whether element is in view.
+  // Walk from each milestone up to roadWrap summing offsetTop values.
+  const pts = [{x: W/2, y: 0}];
+  milestones.forEach((m, idx) => {
+    let top = 0;
+    let el = m;
+    let steps = 0;
+    while(el && el !== wrap && steps < 20){
+      top += el.offsetTop;
+      el = el.offsetParent;
+      steps++;
+    }
+    const cy = top + m.offsetHeight / 2;
+    const x = m.classList.contains("left") ? W * 0.44 : W * 0.56;
+    pts.push({x, y: cy});
+  });
+  pts.push({x: W/2, y: H});
+
+  // Store for traveler
+  window._pts = pts;
+  window._roadW = W;
+  window._roadH = H;
+  // Draw each segment
+  const RW = 36;
+  const edgePairs = [
+    "rgba(91,155,248,0.12)", "rgba(167,139,250,0.10)",
+    "rgba(91,155,248,0.11)", "rgba(167,139,250,0.11)",
+    "rgba(245,200,66,0.08)", "rgba(91,155,248,0.10)"
+  ];
+
+  for(let i = 0; i < pts.length - 1; i++){
+    const p1 = pts[i], p2 = pts[i+1];
+    const midY = (p1.y + p2.y) / 2;
+    // Bezier control points = vertical tangents
+    const cp1x = p1.x, cp1y = midY;
+    const cp2x = p2.x, cp2y = midY;
+
+    // --- Road body (dark wood) ---
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+    ctx.lineWidth = RW;
+    ctx.strokeStyle = "rgba(18,10,4,0.94)";
+    ctx.lineCap = "butt";
+    ctx.stroke();
+
+    // --- Edge glow ---
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+    ctx.lineWidth = RW + 5;
+    ctx.strokeStyle = edgePairs[i % edgePairs.length];
+    ctx.stroke();
+
+    // --- Frets: sample points along the bezier ---
+    const segLen = Math.abs(p2.y - p1.y);
+    const nFrets = Math.max(3, Math.floor(segLen / 22));
+    for(let f = 0; f <= nFrets; f++){
+      const t = f / nFrets;
+      const mt = 1 - t;
+      // Cubic bezier point
+      const bx = mt*mt*mt*p1.x + 3*mt*mt*t*cp1x + 3*mt*t*t*cp2x + t*t*t*p2.x;
+      const by = mt*mt*mt*p1.y + 3*mt*mt*t*cp1y + 3*mt*t*t*cp2y + t*t*t*p2.y;
+      // Tangent direction (for perpendicular fret)
+      const tx2 = 3*mt*mt*(cp1x-p1.x) + 6*mt*t*(cp2x-cp1x) + 3*t*t*(p2.x-cp2x);
+      const ty2 = 3*mt*mt*(cp1y-p1.y) + 6*mt*t*(cp2y-cp1y) + 3*t*t*(p2.y-cp2y);
+      const len = Math.sqrt(tx2*tx2+ty2*ty2)||1;
+      // Perpendicular
+      const nx = -ty2/len, ny = tx2/len;
+      const hw = RW/2 - 1;
+      ctx.beginPath();
+      ctx.moveTo(bx + nx*hw, by + ny*hw);
+      ctx.lineTo(bx - nx*hw, by - ny*hw);
+      ctx.lineWidth = 1.1;
+      ctx.strokeStyle = "rgba(138,115,85,0.55)";
+      ctx.stroke();
+    }
+
+    // --- 6 strings ---
+    for(let s = 0; s < 6; s++){
+      const ox = -(RW/2) + 4 + s*(RW-8)/5;
+      ctx.beginPath();
+      ctx.moveTo(p1.x + ox, p1.y);
+      ctx.bezierCurveTo(cp1x + ox, cp1y, cp2x + ox, cp2y, p2.x + ox, p2.y);
+      ctx.lineWidth = 0.5 + s * 0.14;
+      ctx.strokeStyle = `rgba(210,185,110,${0.12 + s*0.025})`;
+      ctx.stroke();
+    }
+
+    // --- Inlay dots (every 3rd fret) ---
+    for(let f = 3; f < nFrets; f += 3){
+      const t = f / nFrets;
+      const mt = 1 - t;
+      const bx = mt*mt*mt*p1.x + 3*mt*mt*t*cp1x + 3*mt*t*t*cp2x + t*t*t*p2.x;
+      const by = mt*mt*mt*p1.y + 3*mt*mt*t*cp1y + 3*mt*t*t*cp2y + t*t*t*p2.y;
+      ctx.beginPath();
+      ctx.arc(bx, by, 3.5, 0, Math.PI*2);
+      ctx.fillStyle = "rgba(210,185,110,0.35)";
+      ctx.fill();
+    }
+  }
+}
+
+// ==========================================
+// TRAVELER = separate canvas, no road redraw
+// ==========================================
+function drawTraveler(frac){
+  const tc = document.getElementById("travCanvas");
+  const pts = window._pts;
+  if(!tc || !pts) return;
+  const ctx = tc.getContext("2d");
+  ctx.clearRect(0, 0, tc.width, tc.height);
+
+  const targetY = frac * tc.height;
+  let tx = tc.width/2, ty = targetY;
+  for(let i = 0; i < pts.length-1; i++){
+    const p1=pts[i], p2=pts[i+1];
+    if(targetY >= p1.y && targetY <= p2.y){
+      const t = (targetY-p1.y)/Math.max(1,p2.y-p1.y);
+      tx = p1.x + (p2.x-p1.x)*t;
+      break;
+    }
+  }
+  // Glow
+  const g = ctx.createRadialGradient(tx,ty,2,tx,ty,18);
+  g.addColorStop(0,"rgba(91,155,248,0.65)");
+  g.addColorStop(1,"rgba(91,155,248,0)");
+  ctx.beginPath(); ctx.arc(tx,ty,18,0,Math.PI*2);
+  ctx.fillStyle=g; ctx.fill();
+  // Dot
+  ctx.beginPath(); ctx.arc(tx,ty,5,0,Math.PI*2);
+  ctx.fillStyle="rgba(91,155,248,1)"; ctx.fill();
+  ctx.beginPath(); ctx.arc(tx,ty,2.5,0,Math.PI*2);
+  ctx.fillStyle="#fff"; ctx.fill();
+}
+
+// ==========================================
+// SCROLL = focus cards + traveler
+// ==========================================
+const allMilestones = Array.from(document.querySelectorAll(".milestone"));
+const finishEl = document.getElementById("finish");
+
+function onScroll(){
+  const vh = window.innerHeight;
+  const cx = vh * 0.5;
+  allMilestones.forEach(m=>{
+    const r = m.getBoundingClientRect();
+    m.classList.toggle("active", Math.abs(r.top + r.height/2 - cx) < vh * 0.27);
+  });
+  const fr = finishEl.getBoundingClientRect();
+  finishEl.classList.toggle("active", Math.abs(fr.top + fr.height/2 - cx) < vh * 0.42);
+
+  const maxS = document.body.scrollHeight - vh;
+  if(maxS > 0) drawTraveler(window.scrollY / maxS);
+
+  // Background parallax
+  const bgSvg = document.getElementById("bgSvg");
+  if(bgSvg) bgSvg.style.transform = "translateY("+(window.scrollY * 0.15)+"px)";
+}
+
+// ==========================================
+// INIT
+// ==========================================
+window.addEventListener("load", ()=>{
+  drawTimeline();
+  // Scroll to top, draw road (so getBCR positions are consistent), then allow normal scroll
+  const savedScroll = window.scrollY;
+  window.scrollTo(0, 0);
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      drawRoad();
+      onScroll();
+      if(savedScroll) window.scrollTo(0, savedScroll);
+    });
+  });
+});
+
+window.addEventListener("scroll", onScroll, {passive:true});
+window.addEventListener("resize", ()=>{
+  drawRoad(); drawTimeline(); onScroll();
+});
+</script>
+</body>
+</html>
