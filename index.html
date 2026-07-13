@@ -2682,12 +2682,36 @@ function ratedGenreSignals() {
   return Object.keys(stats).map(function(k) { var s = stats[k]; s.avg = s.total / s.count; return s; });
 }
 function loadGenreCatalogPick(genre, bump, cb) {
-  spApi('/search?q=' + encodeURIComponent('genre:"' + genre + '"') + '&type=album&limit=40', function(res) {
-    var knownArtists = {};
-    CAT.forEach(function(r) { knownArtists[norm(r.ar)] = true; });
-    var albums = res && res.albums && res.albums.items ? res.albums.items.filter(function(a) {
+  var knownArtists = {};
+  CAT.forEach(function(r) { knownArtists[norm(r.ar)] = true; });
+
+  // Genre filters are much more reliable for artists than albums. Find a
+  // genuinely new artist first, then choose an unheard studio album by them.
+  spApi('/search?q=' + encodeURIComponent('genre:"' + genre + '"') + '&type=artist&limit=40', function(res) {
+    var artists = res && res.artists && res.artists.items ? res.artists.items.filter(function(a) {
+      return a.id && !knownArtists[norm(a.name)];
+    }) : [];
+    if (artists.length) {
+      var artist = artists[bump % artists.length];
+      loadArtistAlbumCandidate(artist, bump, function(album) {
+        if (album) { cb(album); return; }
+        loadGenreAlbumFallback(genre, bump, knownArtists, cb);
+      });
+      return;
+    }
+    loadGenreAlbumFallback(genre, bump, knownArtists, cb);
+  });
+}
+function loadGenreAlbumFallback(genre, bump, knownArtists, cb) {
+  // Some Spotify accounts return no genre-filtered artists. A plain catalog
+  // search still gives the category a useful, independently rotating fallback.
+  spApi('/search?q=' + encodeURIComponent(genre) + '&type=album&limit=50', function(res) {
+    var seen = {}, albums = res && res.albums && res.albums.items ? res.albums.items.filter(function(a) {
       var ar = a.artists && a.artists[0] ? a.artists[0].name : '';
-      return a.album_type === 'album' && !albumIsKnown(a) && !knownArtists[norm(ar)];
+      var base = norm(ar) + '|' + editionBase(a.name);
+      if (a.album_type !== 'album' || albumIsKnown(a) || knownArtists[norm(ar)] || seen[base]) return false;
+      seen[base] = true;
+      return true;
     }) : [];
     cb(albums.length ? albums[bump % albums.length] : null);
   });
