@@ -2,13 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Album Journey">
 <title>Album Journey</title>
 <link rel="apple-touch-icon" sizes="1024x1024" href="assets/album-journey-icon.png">
 <link rel="icon" type="image/png" href="assets/album-journey-icon.png">
+<script>
+if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+  document.documentElement.classList.add('standalone-app');
+}
+</script>
 <!-- BUILD: 2026-07-12-v4 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
@@ -50,6 +55,8 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
   backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
 }
 .page.active{display:block;}
+@media (display-mode:standalone){.page{padding-top:calc(16px + env(safe-area-inset-top));}}
+html.standalone-app .page{padding-top:calc(16px + env(safe-area-inset-top));}
 
 /* NAV */
 #tabBar{
