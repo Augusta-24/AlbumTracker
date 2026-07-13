@@ -164,6 +164,7 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
 .try-card{display:flex;gap:13px;align-items:center;background:linear-gradient(145deg,rgba(167,139,250,0.13),rgba(20,31,46,0.96));border:1px solid rgba(167,139,250,0.3);border-radius:16px;padding:12px;min-height:112px;}
 .try-card img{width:88px;height:88px;object-fit:cover;border-radius:10px;background:var(--surface2);flex-shrink:0;box-shadow:0 5px 18px rgba(0,0,0,0.45);}
 .try-copy{flex:1;min-width:0;}.try-lane{font-size:9px;color:var(--purple);font-weight:800;text-transform:uppercase;letter-spacing:0.1em;}.try-al{font-size:14px;font-weight:800;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.try-ar{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.try-why{font-size:10px;color:var(--pale);line-height:1.4;margin-top:6px;}.try-actions{display:flex;gap:7px;margin-top:8px;}.try-actions button{border-radius:9px;padding:7px 10px;font-size:10px;font-weight:700;cursor:pointer;}.try-open{background:var(--purple);color:#100b1d;border:none;}.try-again{background:transparent;color:var(--pale);border:1px solid var(--border-mid);}
+.discover-recs{margin-bottom:28px;}.discover-rec-section{margin-top:19px;}.discover-rec-head{font-size:14px;font-weight:800;color:var(--text);}.discover-rec-sub{font-size:10px;color:var(--muted);line-height:1.4;margin:3px 0 8px;}
 .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:26px 0 12px;}
 .sec-head .section-label{margin:0;}
 .sec-action{background:none;border:none;color:var(--sky);font-size:11px;font-weight:600;cursor:pointer;padding:2px 0;}
@@ -257,6 +258,12 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
 }
 .sheet-wrap.open .sheet{transform:none;}
 .sheet-grab{width:38px;height:4px;border-radius:2px;background:var(--dim);margin:4px auto 14px;}
+.sheet-close{
+  position:sticky;top:4px;z-index:4;margin:0 0 -38px auto;width:38px;height:38px;
+  display:flex;align-items:center;justify-content:center;border-radius:50%;
+  border:1px solid var(--border-mid);background:rgba(20,31,46,0.94);color:var(--pale);
+  font-size:25px;line-height:1;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,0.35);
+}
 .qv-hero{display:flex;flex-direction:column;align-items:center;text-align:center;}
 .qv-art{
   width:min(58vw,240px);height:min(58vw,240px);border-radius:12px;object-fit:cover;
@@ -624,11 +631,6 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
   </div>
   <div class="tonight-grid" id="tonightGrid"></div>
 
-  <div class="sec-head">
-    <div class="section-label">Try something new</div>
-  </div>
-  <div id="tryNewArea"></div>
-
   <!-- Agency -->
   <div class="agency-row">
     <button class="agency-btn" id="chooseForMeBtn">
@@ -669,6 +671,17 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
   <div class="page-header">
     <div class="page-title">Discover</div>
     <div class="page-sub">New directions &middot; suggestions from friends</div>
+  </div>
+
+  <div class="discover-recs" id="discoverRecommendations">
+    <div class="section-label" style="margin-top:6px;">Picked for you</div>
+    <div id="tryNewArea"></div>
+    <div id="discoverRecCards" style="display:none;">
+      <div class="discover-rec-section"><div class="discover-rec-head">Maybe you&rsquo;re into&hellip;</div><div class="discover-rec-sub">A genre you rarely visit, surfaced by an unexpectedly strong rating.</div><div id="recEmerging"></div></div>
+      <div class="discover-rec-section"><div class="discover-rec-head">More from artists you liked</div><div class="discover-rec-sub">An unheard album from an artist you scored highly.</div><div id="recRatedArtist"></div></div>
+      <div class="discover-rec-section"><div class="discover-rec-head">Familiar territory, new artist</div><div class="discover-rec-sub">A new name from a genre that consistently works for you.</div><div id="recFamiliar"></div></div>
+      <div class="discover-rec-section"><div class="discover-rec-head">From your Spotify favorites</div><div class="discover-rec-sub">A missing album from one of your long-term Spotify artists.</div><div id="recSpotify"></div></div>
+    </div>
   </div>
 
   <div id="suggestionsSection" style="display:none;margin-bottom:22px;">
@@ -1034,6 +1047,7 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
 <div class="sheet-wrap" id="qvWrap">
   <div class="sheet-backdrop" data-close="qv"></div>
   <div class="sheet" id="qvSheet">
+    <button class="sheet-close" data-close="qv" type="button" aria-label="Close album details">&times;</button>
     <div class="sheet-grab"></div>
     <div class="qv-hero">
       <img class="qv-art" id="qvArt" src="" alt="">
@@ -1074,6 +1088,7 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
 <div class="sheet-wrap" id="rdWrap">
   <div class="sheet-backdrop" data-close="rd"></div>
   <div class="sheet" id="rdSheet">
+    <button class="sheet-close" data-close="rd" type="button" aria-label="Close rating">&times;</button>
     <div class="sheet-grab"></div>
     <div class="rd-head">
       <img id="rdArt" src="" alt="">
@@ -2115,6 +2130,7 @@ window.openReactionSheet = function(ctx) {
       });
     }
   }
+  document.getElementById('rdSheet').scrollTop = 0;
   document.getElementById('rdWrap').classList.add('open');
 };
 
@@ -2405,23 +2421,6 @@ function buildShelves() {
     });
   }
 
-  // Outside your usual lane — rare genres in your listening
-  var genreCounts = {};
-  CAT.forEach(function(r) {
-    if (!r.events.length) return;
-    r.gn.forEach(function(g) { genreCounts[g] = (genreCounts[g] || 0) + 1; });
-  });
-  var outside = CAT.filter(function(r) {
-    if (!r.gn.length || !notRecentlyHeard(r, 90)) return false;
-    return r.gn.every(function(g) { return (genreCounts[g] || 0) <= 3; });
-  });
-  shelves.push({
-    id: 'outside', title: 'Outside your usual lane',
-    why: 'Genres that barely show up in your listening.',
-    items: outside,
-    reason: function(r) { return 'Rare territory for you: ' + r.gn.slice(0, 2).join(', '); }
-  });
-
   return shelves.filter(function(s) { return s.items.length >= (s.min || 4); });
 }
 
@@ -2512,7 +2511,7 @@ function renderTonight() {
   var slots = [
     ['forgotten', 'another'],
     ['never', 'recentAdd', 'suggested'],
-    ['decade', 'outside', 'reconsider'],
+    ['decade', 'reconsider', 'short'],
     ['short', 'reconsider', 'forgotten', 'never']
   ];
   var picks = [], used = {};
@@ -2564,7 +2563,6 @@ document.getElementById('reshuffleTonight').addEventListener('click', function()
 // TRY SOMETHING NEW — Spotify taste + catalog, deliberately lightweight
 // ════════════════════════════════════════════════════════════
 var TRY_TOP_ARTISTS = null;
-var tryNewBusy = false;
 
 function editionBase(name) {
   return norm(String(name || '').replace(/\s*[\(\[]?(deluxe|expanded|remaster(?:ed)?|anniversary|special edition).*$/i, ''));
@@ -2589,6 +2587,9 @@ function renderTryNewState(html) {
   if (area) area.innerHTML = html;
 }
 function renderTryNew() {
+  var cards = document.getElementById('discoverRecCards');
+  if (!cards) return;
+  cards.style.display = 'none';
   if (!isOwner()) {
     renderTryNewState('<div class="setup-card"><div class="txt"><strong>A recommendation just for you.</strong> Owner mode uses your ratings and Spotify taste to find an unheard album.</div></div>');
     return;
@@ -2607,7 +2608,9 @@ function renderTryNew() {
     });
     return;
   }
-  loadTryRecommendation();
+  renderTryNewState('');
+  cards.style.display = 'block';
+  loadDiscoverRecommendations();
 }
 function getTryTopArtists(cb) {
   if (TRY_TOP_ARTISTS && TRY_TOP_ARTISTS.length) { cb(TRY_TOP_ARTISTS); return; }
@@ -2616,23 +2619,125 @@ function getTryTopArtists(cb) {
     cb(TRY_TOP_ARTISTS);
   });
 }
-function loadTryRecommendation() {
-  if (tryNewBusy) return;
-  tryNewBusy = true;
-  renderTryNewState('<div class="setup-card"><div class="txt"><strong>Looking beyond your shelves…</strong><br>Finding an album you have not logged.</div></div>');
-  getTryTopArtists(function(artists) {
-    if (!artists.length) { tryNewBusy = false; renderTryNewError(); return; }
-    var bump = lsGet('try_new_bump', 0);
-    var lane = bump % 2 === 0 ? 'artist' : 'genre';
-    if (lane === 'artist') loadKnownArtistPick(artists, bump, function(pick) {
-      if (pick) finishTryPick(pick);
-      else loadGenrePick(artists, bump, finishTryPick);
+function renderRecLoading(areaId) {
+  var area = document.getElementById(areaId);
+  if (area) area.innerHTML = '<div class="setup-card" style="margin:0;"><div class="txt">Finding a fresh album…</div></div>';
+}
+function renderRecCard(areaId, pick, bumpKey, reload) {
+  var area = document.getElementById(areaId);
+  if (!area) return;
+  if (!pick || !pick.album) {
+    area.innerHTML = '<div class="setup-card" style="margin:0;"><div class="txt">No fresh match this time.</div><button class="btn-ghost">Try again</button></div>';
+    area.querySelector('button').addEventListener('click', function() {
+      lsSet(bumpKey, (lsGet(bumpKey, 0) + 1) % 10000); reload();
     });
-    else loadGenrePick(artists, bump, function(pick) {
-      if (pick) finishTryPick(pick);
-      else loadKnownArtistPick(artists, bump, finishTryPick);
+    return;
+  }
+  var rec = spotifyAlbumRec(pick.album);
+  area.innerHTML = '<div class="try-card">' +
+    (rec.im ? '<img src="' + esc(rec.im) + '" alt="">' : '<div style="width:88px;height:88px;background:var(--surface2);border-radius:10px;"></div>') +
+    '<div class="try-copy"><div class="try-lane">' + esc(pick.lane) + '</div><div class="try-al">' + esc(rec.al) + '</div><div class="try-ar">' + esc(rec.ar) + '</div><div class="try-why">' + esc(pick.why) + '</div>' +
+    '<div class="try-actions"><button class="try-open">View album</button><button class="try-again">Try another</button></div></div></div>';
+  area.querySelector('.try-open').addEventListener('click', function() { openQuickView(rec, {why: pick.why, source: 'recommendation'}); });
+  area.querySelector('.try-again').addEventListener('click', function() {
+    lsSet(bumpKey, (lsGet(bumpKey, 0) + 1) % 10000); reload();
+  });
+}
+function ratedGenreSignals() {
+  var stats = {};
+  CAT.forEach(function(r) {
+    var score = r.latestScore != null ? r.latestScore : r.jsc;
+    if (score == null) return;
+    r.gn.forEach(function(g) {
+      var key = norm(g);
+      if (!key) return;
+      var s = stats[key] || (stats[key] = {genre:g, count:0, total:0, max:0, anchor:null});
+      s.count++; s.total += score;
+      if (score > s.max) { s.max = score; s.anchor = r; }
     });
   });
+  return Object.keys(stats).map(function(k) { var s = stats[k]; s.avg = s.total / s.count; return s; });
+}
+function loadGenreCatalogPick(genre, bump, cb) {
+  spApi('/search?q=' + encodeURIComponent('genre:"' + genre + '"') + '&type=album&limit=40', function(res) {
+    var knownArtists = {};
+    CAT.forEach(function(r) { knownArtists[norm(r.ar)] = true; });
+    var albums = res && res.albums && res.albums.items ? res.albums.items.filter(function(a) {
+      var ar = a.artists && a.artists[0] ? a.artists[0].name : '';
+      return a.album_type === 'album' && !albumIsKnown(a) && !knownArtists[norm(ar)];
+    }) : [];
+    cb(albums.length ? albums[bump % albums.length] : null);
+  });
+}
+function loadEmergingRecommendation() {
+  var areaId = 'recEmerging', key = 'rec_emerging_bump', bump = lsGet(key, 0);
+  renderRecLoading(areaId);
+  var signals = ratedGenreSignals().filter(function(s) { return s.count <= 4 && s.max >= 85; })
+    .sort(function(a,b) { return (b.max - b.count * 2) - (a.max - a.count * 2); });
+  if (!signals.length) { renderRecCard(areaId, null, key, loadEmergingRecommendation); return; }
+  var signal = signals[bump % signals.length];
+  loadGenreCatalogPick(signal.genre, bump, function(album) {
+    var a = signal.anchor;
+    renderRecCard(areaId, album ? {album:album, lane:'Maybe you’re into ' + signal.genre, why:'You only have ' + signal.count + ' rated ' + signal.genre + ' album' + (signal.count === 1 ? '' : 's') + ', but you gave ' + a.ar + ' — ' + a.al + ' a ' + signal.max + '.'} : null, key, loadEmergingRecommendation);
+  });
+}
+function loadRatedArtistRecommendation() {
+  var areaId = 'recRatedArtist', key = 'rec_artist_bump', bump = lsGet(key, 0);
+  renderRecLoading(areaId);
+  var best = {};
+  CAT.forEach(function(r) {
+    var sc = r.latestScore != null ? r.latestScore : r.jsc;
+    var arKey = norm(r.ar);
+    if (sc != null && sc >= 85 && arKey && (!best[arKey] || sc > best[arKey].score)) best[arKey] = {rec:r, score:sc};
+  });
+  var anchors = Object.keys(best).map(function(k) { return best[k].rec; })
+    .sort(function(a,b) { return (b.latestScore || b.jsc) - (a.latestScore || a.jsc); });
+  if (!anchors.length) { renderRecCard(areaId, null, key, loadRatedArtistRecommendation); return; }
+  var anchor = anchors[bump % Math.min(anchors.length, 40)];
+  spApi('/search?q=' + encodeURIComponent('artist:"' + anchor.ar + '"') + '&type=artist&limit=5', function(res) {
+    var artists = res && res.artists && res.artists.items ? res.artists.items : [];
+    var artist = artists.filter(function(a) { return norm(a.name) === norm(anchor.ar); })[0] || artists[0];
+    if (!artist) { renderRecCard(areaId, null, key, loadRatedArtistRecommendation); return; }
+    loadArtistAlbumCandidate(artist, bump, function(album) {
+      var score = anchor.latestScore != null ? anchor.latestScore : anchor.jsc;
+      renderRecCard(areaId, album ? {album:album, lane:'More from ' + anchor.ar, why:'You gave ' + anchor.al + ' a ' + score + '. This is another ' + anchor.ar + ' album you have not logged.'} : null, key, loadRatedArtistRecommendation);
+    });
+  });
+}
+function loadArtistAlbumCandidate(artist, bump, cb) {
+  spApi('/artists/' + encodeURIComponent(artist.id) + '/albums?include_groups=album&limit=50', function(res) {
+    var seen = {}, albums = (res && res.items ? res.items : []).filter(function(a) {
+      var base = editionBase(a.name);
+      if (!base || seen[base] || albumIsKnown(a) || a.album_type !== 'album') return false;
+      seen[base] = true; return true;
+    });
+    cb(albums.length ? albums[bump % albums.length] : null);
+  });
+}
+function loadFamiliarRecommendation() {
+  var areaId = 'recFamiliar', key = 'rec_familiar_bump', bump = lsGet(key, 0);
+  renderRecLoading(areaId);
+  var signals = ratedGenreSignals().filter(function(s) { return s.count >= 4 && s.avg >= 75 && s.max >= 85; })
+    .sort(function(a,b) { return (b.avg + Math.min(b.count,10)) - (a.avg + Math.min(a.count,10)); });
+  if (!signals.length) { renderRecCard(areaId, null, key, loadFamiliarRecommendation); return; }
+  var signal = signals[bump % signals.length];
+  loadGenreCatalogPick(signal.genre, bump, function(album) {
+    renderRecCard(areaId, album ? {album:album, lane:'New artist · ' + signal.genre, why:'Your ' + signal.count + ' rated ' + signal.genre + ' albums average ' + Math.round(signal.avg) + '. This artist is not in your Album Journey history.'} : null, key, loadFamiliarRecommendation);
+  });
+}
+function loadSpotifyRecommendation() {
+  var areaId = 'recSpotify', key = 'rec_spotify_bump', bump = lsGet(key, 0);
+  renderRecLoading(areaId);
+  getTryTopArtists(function(artists) {
+    if (!artists.length) { renderRecCard(areaId, null, key, loadSpotifyRecommendation); return; }
+    loadKnownArtistPick(artists, bump, function(pick) { renderRecCard(areaId, pick, key, loadSpotifyRecommendation); });
+  });
+}
+function loadDiscoverRecommendations() {
+  loadEmergingRecommendation();
+  loadRatedArtistRecommendation();
+  loadFamiliarRecommendation();
+  loadSpotifyRecommendation();
 }
 function loadKnownArtistPick(artists, bump, cb) {
   var artist = artists[bump % Math.min(artists.length, 15)];
@@ -2645,49 +2750,6 @@ function loadKnownArtistPick(artists, bump, cb) {
     });
     var a = albums.length ? albums[bump % albums.length] : null;
     cb(a ? {album: a, lane: 'More from an artist you love', why: artist.name + ' is one of your long-term Spotify favorites, but this album is not in your listening history.'} : null);
-  });
-}
-function loadGenrePick(artists, bump, cb) {
-  var genres = [];
-  artists.slice(0, 20).forEach(function(a) { (a.genres || []).forEach(function(g) { if (genres.indexOf(g) === -1) genres.push(g); }); });
-  if (!genres.length) {
-    CAT.forEach(function(r) { if ((r.latestScore || r.jsc || 0) >= 85) r.gn.forEach(function(g) { if (genres.indexOf(g) === -1) genres.push(g); }); });
-  }
-  if (!genres.length) { cb(null); return; }
-  var genre = genres[bump % Math.min(genres.length, 20)];
-  spApi('/search?q=' + encodeURIComponent('genre:"' + genre + '"') + '&type=album&limit=30', function(res) {
-    var knownArtists = {};
-    CAT.forEach(function(r) { knownArtists[norm(r.ar)] = true; });
-    var albums = res && res.albums && res.albums.items ? res.albums.items.filter(function(a) {
-      var ar = a.artists && a.artists[0] ? a.artists[0].name : '';
-      return a.album_type === 'album' && !albumIsKnown(a) && !knownArtists[norm(ar)];
-    }) : [];
-    var a = albums.length ? albums[bump % albums.length] : null;
-    var anchor = CAT.filter(function(r) { return (r.latestScore || r.jsc || 0) >= 85 && r.gn.some(function(g) { return norm(g) === norm(genre); }); })[0];
-    var why = 'A new artist from ' + genre + ', a lane that shows up in your Spotify taste';
-    if (anchor) why += ' and your ' + (anchor.latestScore || anchor.jsc) + ' for ' + anchor.al;
-    cb(a ? {album: a, lane: 'New artist, familiar territory', why: why + '.'} : null);
-  });
-}
-function finishTryPick(pick) {
-  tryNewBusy = false;
-  if (!pick || !pick.album) { renderTryNewError(); return; }
-  var rec = spotifyAlbumRec(pick.album);
-  renderTryNewState('<div class="try-card">' +
-    (rec.im ? '<img src="' + esc(rec.im) + '" alt="">' : '<div style="width:88px;height:88px;background:var(--surface2);border-radius:10px;"></div>') +
-    '<div class="try-copy"><div class="try-lane">' + esc(pick.lane) + '</div><div class="try-al">' + esc(rec.al) + '</div><div class="try-ar">' + esc(rec.ar) + '</div><div class="try-why">' + esc(pick.why) + '</div>' +
-    '<div class="try-actions"><button class="try-open" id="tryOpen">View album</button><button class="try-again" id="tryAgain">Try another</button></div></div></div>');
-  document.getElementById('tryOpen').addEventListener('click', function() { openQuickView(rec, {why: pick.why, source: 'recommendation'}); });
-  document.getElementById('tryAgain').addEventListener('click', function() {
-    lsSet('try_new_bump', (lsGet('try_new_bump', 0) + 1) % 10000);
-    loadTryRecommendation();
-  });
-}
-function renderTryNewError() {
-  renderTryNewState('<div class="setup-card"><div class="txt"><strong>No fresh match this time.</strong> Spotify may have returned albums already in your history.</div><button class="btn-ghost" id="tryRetry">Try again</button></div>');
-  document.getElementById('tryRetry').addEventListener('click', function() {
-    lsSet('try_new_bump', (lsGet('try_new_bump', 0) + 1) % 10000);
-    loadTryRecommendation();
   });
 }
 
@@ -2771,6 +2833,7 @@ function openQuickView(rec, opts) {
     chips.appendChild(rate);
   } else log.style.display = 'none';
 
+  document.getElementById('qvSheet').scrollTop = 0;
   document.getElementById('qvWrap').classList.add('open');
 }
 window.openQuickView = openQuickView;
@@ -3038,8 +3101,8 @@ function sourceLabel(e, rec) {
     spotify: 'noticed via Spotify', manual: 'logged by hand', randomizer: 'the randomizer chose it',
     crate: 'found in the crate', forgotten: 'from Forgotten favorites', another: 'from Worth another listen',
     never: 'from Throwbacks', suggested: 'a friend suggested it', recentAdd: 'from the discover pile',
-    short: 'a short listen', reconsider: 'a re-hearing', decade: 'from the era shelf',
-    outside: 'off the beaten path', saved: 'from Saved for later', similar: 'via Similar'
+    short: 'a short listen', reconsider: 'a re-hearing', decade: 'from the era shelf', recommendation: 'from Discover recommendations',
+    saved: 'from Saved for later', similar: 'via Similar'
   };
   return srcNames[e.src] || (e.src ? e.src : 'listen');
 }
