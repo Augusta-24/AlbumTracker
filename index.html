@@ -37,7 +37,7 @@ if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)
   --spotify: #1DB954;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;touch-action:pan-x pan-y;}
 body{
   background:var(--bg);
   color:var(--text);
@@ -45,6 +45,7 @@ body{
   min-height:100vh;
   overflow-x:hidden;
   padding-bottom:calc(60px + env(safe-area-inset-bottom));
+  touch-action:pan-x pan-y;
 }
 button{font-family:inherit;-webkit-tap-highlight-color:transparent;}
 #bgLayer{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
@@ -1624,6 +1625,21 @@ document.addEventListener('keydown', function(e) {
   document.getElementById('settingsModal').classList.remove('open');
   document.getElementById('spSetupModal').classList.remove('open');
 });
+
+// iOS may ignore user-scalable=no, especially in a Home Screen web app.
+// Block native pinch gestures and double-tap zoom while preserving one-finger scrolling.
+['gesturestart', 'gesturechange', 'gestureend'].forEach(function(type) {
+  document.addEventListener(type, function(e) { e.preventDefault(); }, {passive:false});
+});
+document.addEventListener('touchmove', function(e) {
+  if (e.touches && e.touches.length > 1) e.preventDefault();
+}, {passive:false});
+var lastGlobalTouchEnd = 0;
+document.addEventListener('touchend', function(e) {
+  var now = Date.now();
+  if (now - lastGlobalTouchEnd <= 300) e.preventDefault();
+  lastGlobalTouchEnd = now;
+}, {passive:false});
 
 // ════════════════════════════════════════════════════════════
 // PENDING CHOICES + SAVED FOR LATER + HANDLED PROMPTS
@@ -3613,7 +3629,7 @@ ths.forEach(function(th) {
 
 // ── GRID (everything with artwork, score-sorted) ──
 var _lbOrigin = null;
-var _lbPinchDist = 0, _lbPinchScale = 1, _lbPinchBase = 1, _lbSwipeStartY = 0;
+var _lbSwipeStartY = 0;
 
 function renderGrid() {
   var status = document.getElementById('gridStatus');
@@ -3684,7 +3700,6 @@ function openGridLightbox(card, album) {
   var info = document.getElementById('gridLbInfo');
 
   _lbOrigin = card.getBoundingClientRect();
-  _lbPinchScale = 1;
   inner.style.transform = '';
   inner.style.transition = 'none';
 
@@ -3737,7 +3752,6 @@ function closeGridLightbox() {
   if (!_lbOrigin) { lb.style.display = 'none'; return; }
   info.classList.remove('show');
   inner.style.transform = '';
-  _lbPinchScale = 1;
   var sp = 'cubic-bezier(0.4,0,0.6,1)';
   inner.style.transition = 'left 0.3s ' + sp + ',top 0.3s ' + sp + ',width 0.3s ' + sp + ',height 0.3s ' + sp + ',border-radius 0.25s ease,transform 0.3s ease';
   inner.style.left = _lbOrigin.left + 'px';
@@ -3755,23 +3769,13 @@ document.getElementById('gridLbBackdrop').addEventListener('click', closeGridLig
   var bd = document.getElementById('gridLbBackdrop');
 
   inner.addEventListener('touchstart', function(e) {
-    if (e.touches.length === 2) {
-      _lbPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      _lbPinchBase = _lbPinchScale;
-      e.preventDefault();
-    } else if (e.touches.length === 1) {
+    if (e.touches.length === 1) {
       _lbSwipeStartY = e.touches[0].clientY;
     }
   }, {passive: false});
 
   inner.addEventListener('touchmove', function(e) {
-    if (e.touches.length === 2) {
-      var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      _lbPinchScale = Math.max(0.85, Math.min(3, _lbPinchBase * (d / _lbPinchDist)));
-      inner.style.transition = 'none';
-      inner.style.transform = 'scale(' + _lbPinchScale + ')';
-      e.preventDefault();
-    } else if (e.touches.length === 1) {
+    if (e.touches.length === 1) {
       var dy = e.touches[0].clientY - _lbSwipeStartY;
       if (dy > 0) {
         inner.style.transition = 'none';
@@ -3786,13 +3790,10 @@ document.getElementById('gridLbBackdrop').addEventListener('click', closeGridLig
     var dy = (e.changedTouches[0] ? e.changedTouches[0].clientY : _lbSwipeStartY) - _lbSwipeStartY;
     if (e.touches.length === 0) {
       if (dy > 90) { closeGridLightbox(); return; }
-      _lbPinchScale = Math.max(1, _lbPinchScale);
       inner.style.transition = 'transform 0.3s cubic-bezier(0.34,1.1,0.64,1)';
-      inner.style.transform = _lbPinchScale > 1 ? 'scale(' + _lbPinchScale + ')' : '';
+      inner.style.transform = '';
       bd.style.opacity = '';
-      setTimeout(function() {
-        if (_lbPinchScale <= 1) inner.style.transition = '';
-      }, 300);
+      setTimeout(function() { inner.style.transition = ''; }, 300);
     }
   });
 })();
