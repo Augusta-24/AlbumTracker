@@ -14,7 +14,7 @@ if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)
   document.documentElement.classList.add('standalone-app');
 }
 </script>
-<!-- BUILD: 2026-07-21-v6 -->
+<!-- BUILD: 2026-07-21-v7 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -171,7 +171,7 @@ html.standalone-app .page{padding-top:calc(16px + env(safe-area-inset-top));}
 }
 .try-card{display:flex;gap:13px;align-items:center;background:linear-gradient(145deg,rgba(167,139,250,0.13),rgba(20,31,46,0.96));border:1px solid rgba(167,139,250,0.3);border-radius:16px;padding:12px;min-height:112px;}
 .try-card img{width:88px;height:88px;object-fit:cover;border-radius:10px;background:var(--surface2);flex-shrink:0;box-shadow:0 5px 18px rgba(0,0,0,0.45);}
-.try-copy{flex:1;min-width:0;}.try-lane{font-size:9px;color:var(--purple);font-weight:800;text-transform:uppercase;letter-spacing:0.1em;}.try-al{font-size:14px;font-weight:800;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.try-ar{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.try-why{font-size:10px;color:var(--pale);line-height:1.4;margin-top:6px;}.try-actions{display:flex;gap:7px;margin-top:8px;}.try-actions button{border-radius:9px;padding:7px 10px;font-size:10px;font-weight:700;cursor:pointer;}.try-open{background:var(--purple);color:#100b1d;border:none;}.try-again{background:transparent;color:var(--pale);border:1px solid var(--border-mid);}
+.try-copy{flex:1;min-width:0;}.try-lane{font-size:9px;color:var(--purple);font-weight:800;text-transform:uppercase;letter-spacing:0.1em;}.try-al{font-size:14px;font-weight:800;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.try-ar{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.try-why{font-size:10px;color:var(--pale);line-height:1.4;margin-top:6px;}.try-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;}.try-actions button{border-radius:9px;padding:7px 10px;font-size:10px;font-weight:700;cursor:pointer;}.try-open{background:var(--purple);color:#100b1d;border:none;}.try-again{background:transparent;color:var(--pale);border:1px solid var(--border-mid);}.try-dismiss{background:transparent;color:var(--red);border:1px solid rgba(224,112,112,0.35);}
 .discover-recs{margin-bottom:28px;}.discover-rec-section{margin-top:19px;}.discover-rec-head{font-size:14px;font-weight:800;color:var(--text);}.discover-rec-sub{font-size:10px;color:var(--muted);line-height:1.4;margin:3px 0 8px;}
 .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:26px 0 12px;}
 .sec-head .section-label{margin:0;}
@@ -2659,6 +2659,19 @@ function albumIsKnown(a) {
   if (a.id && CAT_BY_ID[a.id]) return true;
   return CAT.some(function(r) { return norm(r.ar) === norm(artist) && editionBase(r.al) === editionBase(a.name); });
 }
+function recommendationDismissKey(a) {
+  var artist = a && a.artists && a.artists[0] ? a.artists[0].name : '';
+  return norm(artist) + '|' + editionBase(a && a.name);
+}
+function albumIsDismissed(a) {
+  var dismissed = lsGet('rec_dismissed', {}) || {};
+  return !!dismissed[recommendationDismissKey(a)];
+}
+function dismissRecommendedAlbum(a) {
+  var dismissed = lsGet('rec_dismissed', {}) || {};
+  dismissed[recommendationDismissKey(a)] = Date.now();
+  lsSet('rec_dismissed', dismissed);
+}
 function spotifyAlbumRec(a) {
   var artist = a.artists && a.artists[0] ? a.artists[0].name : '';
   var rec = getOrCreateRec(a.id || '', artist, a.name || '');
@@ -2724,10 +2737,16 @@ function renderRecCard(areaId, pick, bumpKey, reload) {
   area.innerHTML = '<div class="try-card">' +
     (rec.im ? '<img src="' + esc(rec.im) + '" alt="">' : '<div style="width:88px;height:88px;background:var(--surface2);border-radius:10px;"></div>') +
     '<div class="try-copy"><div class="try-lane">' + esc(pick.lane) + '</div><div class="try-al">' + esc(rec.al) + '</div><div class="try-ar">' + esc(rec.ar) + '</div><div class="try-why">' + esc(pick.why) + '</div>' +
-    '<div class="try-actions"><button class="try-open">View album</button><button class="try-again">Try another</button></div></div></div>';
+    '<div class="try-actions"><button class="try-open">View album</button><button class="try-again">Try another</button><button class="try-dismiss">Dismiss</button></div></div></div>';
   area.querySelector('.try-open').addEventListener('click', function() { openQuickView(rec, {why: pick.why, source: 'recommendation'}); });
   area.querySelector('.try-again').addEventListener('click', function() {
     lsSet(bumpKey, (lsGet(bumpKey, 0) + 1) % 10000); reload();
+  });
+  area.querySelector('.try-dismiss').addEventListener('click', function() {
+    dismissRecommendedAlbum(pick.album);
+    lsSet(bumpKey, (lsGet(bumpKey, 0) + 1) % 10000);
+    toast('Dismissed from recommendations');
+    reload();
   });
 }
 function ratedGenreSignals() {
@@ -2773,7 +2792,7 @@ function loadGenreAlbumFallback(genre, bump, knownArtists, cb) {
     var seen = {}, albums = res && res.albums && res.albums.items ? res.albums.items.filter(function(a) {
       var ar = a.artists && a.artists[0] ? a.artists[0].name : '';
       var base = norm(ar) + '|' + editionBase(a.name);
-      if (a.album_type !== 'album' || albumIsKnown(a) || knownArtists[norm(ar)] || seen[base]) return false;
+      if (a.album_type !== 'album' || albumIsKnown(a) || albumIsDismissed(a) || knownArtists[norm(ar)] || seen[base]) return false;
       seen[base] = true;
       return true;
     }) : [];
@@ -2819,7 +2838,7 @@ function loadArtistAlbumCandidate(artist, bump, cb) {
   spApi('/artists/' + encodeURIComponent(artist.id) + '/albums?include_groups=album&limit=50', function(res) {
     var seen = {}, albums = (res && res.items ? res.items : []).filter(function(a) {
       var base = editionBase(a.name);
-      if (!base || seen[base] || albumIsKnown(a) || a.album_type !== 'album') return false;
+      if (!base || seen[base] || albumIsKnown(a) || albumIsDismissed(a) || a.album_type !== 'album') return false;
       seen[base] = true; return true;
     });
     cb(albums.length ? albums[bump % albums.length] : null);
@@ -2855,7 +2874,7 @@ function loadKnownArtistPick(artists, bump, cb) {
   spApi('/artists/' + encodeURIComponent(artist.id) + '/albums?include_groups=album&limit=50', function(res) {
     var seen = {}, albums = (res && res.items ? res.items : []).filter(function(a) {
       var base = editionBase(a.name);
-      if (!base || seen[base] || albumIsKnown(a)) return false;
+      if (!base || seen[base] || albumIsKnown(a) || albumIsDismissed(a)) return false;
       seen[base] = true;
       return a.album_type === 'album';
     });
