@@ -14,7 +14,7 @@ if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)
   document.documentElement.classList.add('standalone-app');
 }
 </script>
-<!-- BUILD: 2026-07-21-v5 -->
+<!-- BUILD: 2026-07-21-v6 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -1975,6 +1975,23 @@ function promptKeyOf(det) {
   return det.albumId + '|' + day;
 }
 
+function ratingCount(rec) {
+  if (!rec) return 0;
+  // Count the original Journey score once, even if its dated Journey event is
+  // missing, then count every scored post-Journey listen/revisit.
+  var count = rec.jsc != null && isFinite(Number(rec.jsc)) ? 1 : 0;
+  rec.events.forEach(function(e) {
+    if (e.type !== 'journey' && e.sc != null && e.sc !== '' && isFinite(Number(e.sc))) count++;
+  });
+  return count;
+}
+
+function hasReachedRatingLimit(rec) {
+  if (!rec) return false;
+  var isJourneyAlbum = rec.srcs.indexOf('journey') !== -1;
+  return ratingCount(rec) >= (isJourneyAlbum ? 2 : 1);
+}
+
 function handleDetections(dets) {
   var handled = getHandled();
   PROMPTS = [];
@@ -1983,6 +2000,9 @@ function handleDetections(dets) {
     var pk = promptKeyOf(det);
     if (handled[pk]) return;
     var rec = CAT_BY_ID[det.albumId] || CAT_BY_KEY['nm:' + norm(det.artist) + '|' + norm(det.name)];
+    // Journey albums get one follow-up rating; other albums stop prompting
+    // after their first rating.
+    if (hasReachedRatingLimit(rec)) { markHandled(pk); return; }
     // suppress if a listen was already logged for this album in the last 36h
     if (rec && rec.events.some(function(e) {
       return e.type === 'listen' && Math.abs(det.lastAt - e.date) < 36 * 3600e3;
