@@ -14,7 +14,7 @@ if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)
   document.documentElement.classList.add('standalone-app');
 }
 </script>
-<!-- BUILD: 2026-07-12-v4 -->
+<!-- BUILD: 2026-07-21-v5 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -1684,6 +1684,8 @@ function markHandled(promptKey) {
 var SP_SCOPES = 'user-read-recently-played user-read-currently-playing user-top-read';
 var SP_SCOPE_VERSION = 2;
 var lastSyncAt = 0;
+var spRefreshInFlight = false;
+var spRefreshWaiters = [];
 
 function spCfg() {
   return {
@@ -1722,6 +1724,10 @@ window.spBeginAuth = function(clientId) {
   }
   lsSet('sp_cid', clientId);
   var verifier = randomVerifier();
+  var state = randomVerifier();
+  // localStorage survives an installed app being suspended while Spotify is open.
+  // Keep sessionStorage too for older sessions already using that path.
+  lsSet('sp_auth', {verifier: verifier, state: state, createdAt: Date.now()});
   sessionStorage.setItem('aj4_sp_verifier', verifier);
   sha256(verifier).then(function(digest) {
     var url = 'https://accounts.spotify.com/authorize' +
@@ -1729,6 +1735,7 @@ window.spBeginAuth = function(clientId) {
       '&response_type=code' +
       '&redirect_uri=' + encodeURIComponent(redirectUri()) +
       '&scope=' + encodeURIComponent(SP_SCOPES) +
+      '&state=' + encodeURIComponent(state) +
       '&code_challenge_method=S256' +
       '&code_challenge=' + b64url(digest);
     location.href = url;
@@ -1744,9 +1751,14 @@ function tokenRequest(params, cb) {
     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
     body: body
   })
-    .then(function(r) { return r.json(); })
+    .then(function(r) {
+      return r.json().catch(function() { return {}; }).then(function(body) {
+        body._httpStatus = r.status;
+        return body;
+      });
+    })
     .then(cb)
-    .catch(function() { cb({error: 'network'}); });
+    .catch(function() { cb({error: 'network', _transient: true}); });
 }
 
 function storeTokens(t) {
@@ -1761,9 +1773,24 @@ function storeTokens(t) {
 window.spHandleRedirect = function(cb) {
   var m = location.search.match(/[?&]code=([^&]+)/);
   if (!m) { cb(false); return; }
-  var verifier = sessionStorage.getItem('aj4_sp_verifier');
-  history.replaceState({}, '', location.pathname + location.hash);
-  if (!verifier) { cb(false); return; }
+  var auth = lsGet('sp_auth', null);
+  var verifier = (auth && auth.verifier) || sessionStorage.getItem('aj4_sp_verifier');
+  var stateMatch = location.search.match(/[?&]state=([^&]+)/);
+  var returnedState = stateMatch ? decodeURIComponent(stateMatch[1]) : '';
+  if (auth && (Date.now() - auth.createdAt > 15 * 60 * 1000 || returnedState !== auth.state)) {
+    lsDel('sp_auth');
+    sessionStorage.removeItem('aj4_sp_verifier');
+    history.replaceState({}, '', location.pathname + location.hash);
+    toast('Spotify authorization expired — please try again');
+    cb(false);
+    return;
+  }
+  if (!verifier) {
+    history.replaceState({}, '', location.pathname + location.hash);
+    toast('Spotify authorization expired — please try again');
+    cb(false);
+    return;
+  }
   tokenRequest({
     grant_type: 'authorization_code',
     code: decodeURIComponent(m[1]),
@@ -1771,13 +1798,20 @@ window.spHandleRedirect = function(cb) {
     client_id: spCfg().cid,
     code_verifier: verifier
   }, function(t) {
-    sessionStorage.removeItem('aj4_sp_verifier');
     if (t.access_token) {
+      lsDel('sp_auth');
+      sessionStorage.removeItem('aj4_sp_verifier');
+      history.replaceState({}, '', location.pathname + location.hash);
       storeTokens(t);
       lsSet('sp_scope_version', SP_SCOPE_VERSION);
       toast('Spotify connected');
       cb(true);
     } else {
+      // The authorization code is single-use. Leave saved Spotify credentials
+      // alone, but clear this attempt and its URL before asking the user to retry.
+      lsDel('sp_auth');
+      sessionStorage.removeItem('aj4_sp_verifier');
+      history.replaceState({}, '', location.pathname + location.hash);
       toast('Spotify authorization failed');
       cb(false);
     }
@@ -1785,7 +1819,7 @@ window.spHandleRedirect = function(cb) {
 };
 
 window.spDisconnect = function() {
-  ['sp_access', 'sp_refresh', 'sp_exp', 'sp_after', 'sp_scope_version'].forEach(lsDel);
+  ['sp_access', 'sp_refresh', 'sp_exp', 'sp_after', 'sp_scope_version', 'sp_auth'].forEach(lsDel);
   toast('Spotify disconnected');
 };
 
@@ -1793,18 +1827,28 @@ function ensureToken(cb) {
   var c = spCfg();
   if (!c.refresh) { cb(null); return; }
   if (c.access && Date.now() < c.exp) { cb(c.access); return; }
+  spRefreshWaiters.push(cb);
+  if (spRefreshInFlight) return;
+  spRefreshInFlight = true;
   tokenRequest({
     grant_type: 'refresh_token',
     refresh_token: c.refresh,
     client_id: c.cid
   }, function(t) {
-    if (t.access_token) { storeTokens(t); cb(t.access_token); }
-    else {
-      // refresh revoked/expired → require reconnect, quietly
+    var token = null;
+    if (t.access_token) {
+      storeTokens(t);
+      token = t.access_token;
+    } else if (t.error === 'invalid_grant' || t.error === 'invalid_client') {
+      // Only definitive credential errors should require reconnecting. Network,
+      // rate-limit, and Spotify server failures must not erase a valid login.
       lsDel('sp_access'); lsDel('sp_refresh'); lsDel('sp_exp');
       renderSpotifySetup();
-      cb(null);
     }
+    spRefreshInFlight = false;
+    var waiters = spRefreshWaiters.slice();
+    spRefreshWaiters = [];
+    waiters.forEach(function(done) { done(token); });
   });
 }
 
